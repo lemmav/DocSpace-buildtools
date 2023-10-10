@@ -95,8 +95,7 @@ RUN mkdir -p /var/log/onlyoffice && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
-        
-#USER onlyoffice
+
 EXPOSE 5050
 ENTRYPOINT ["python3", "docker-entrypoint.py"]
 

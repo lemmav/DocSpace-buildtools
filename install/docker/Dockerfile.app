@@ -38,9 +38,9 @@ RUN apt-get -y update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-ADD https://api.github.com/repos/ONLYOFFICE/DocSpace/git/refs/heads/${GIT_BRANCH} version.json
+ADD https://api.github.com/repos/lemmav/DocSpace/git/refs/heads/${GIT_BRANCH} version.json
 RUN echo ${GIT_BRANCH}  && \
-    git clone --recurse-submodules -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace.git ${SRC_PATH}
+    git clone --recurse-submodules -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace.git ${SRC_PATH}
 
 RUN cd ${SRC_PATH} && \
     mkdir -p /app/onlyoffice/config/ && \
@@ -246,7 +246,9 @@ WORKDIR ${BUILD_PATH}/products/ASC.Files/service/
 
 COPY --chown=onlyoffice:onlyoffice docker-entrypoint.py ./docker-entrypoint.py
 COPY --from=base --chown=onlyoffice:onlyoffice ${BUILD_PATH}/services/ASC.Files.Service/service/ .
-COPY --from=onlyoffice/ffvideo:6.0 --chown=onlyoffice:onlyoffice /usr/local /usr/local/
+# COPY --from=onlyoffice/ffvideo:6.0 --chown=onlyoffice:onlyoffice /usr/local /usr/local/
+COPY --from=mwader/static-ffmpeg:6.0-1 --chown=onlyoffice:onlyoffice /ffmpeg /usr/local/
+COPY --from=mwader/static-ffmpeg:6.0-1 --chown=onlyoffice:onlyoffice /ffprobe /usr/local/
 
 CMD ["ASC.Files.Service.dll", "ASC.Files.Service", "core:eventBus:subscriptionClientName=asc_event_bus_files_service_queue"]
 

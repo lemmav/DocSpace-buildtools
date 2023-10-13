@@ -2,7 +2,7 @@ name: 4testing multiarch-build
 
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0 0 * * 0'
 env:
   DOCKER_PATH: "/install/docker"
   REPO: "lemmav"

@@ -21,7 +21,7 @@ jobs:
         uses: jsryudev/release-branch-finder@v0.1.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-branch-prefix: 'develop'
+          release-branch-prefix: 'master'
       - name: Checkout
         uses: actions/checkout@v3
         with:

@@ -2,10 +2,10 @@ name: 4testing multiarch-build
 
 on:
   schedule:
-    - cron: '0 20 * * *' 
+    - cron: '*/15 * * * *'
 env:
   DOCKER_PATH: "/install/docker"
-  REPO: "onlyoffice"
+  REPO: "lemmav"
   DOCKER_IMAGE_PREFIX: "4testing-docspace"
   DOCKERFILE: "Dockerfile.app"
 
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        platform: [linux/amd64]
+        platform: [linux/amd64, linux/arm64]
     steps:
       - name: Find Latest Release Branch
         id: release-branch-finder

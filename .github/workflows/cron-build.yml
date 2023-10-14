@@ -2,8 +2,8 @@ name: 4testing multiarch-build
 
 on:
   schedule:
-    # - cron: '*/15 * * * *'
-    - cron: '0 0 * * 0'
+    - cron: '*/15 * * * *'
+    # - cron: '0 0 * * 0'
 env:
   DOCKER_PATH: "/install/docker"
   REPO: "lemmav"
@@ -53,7 +53,6 @@ jobs:
 
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=$GITHUB_REF_NAME \
-          --set *.platform=linux/amd64 \
-          --set *.platform=linux/arm64 \
+          --set *.platform=linux/amd64,linux/arm64 \
           --push
         shell: bash

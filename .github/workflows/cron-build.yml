@@ -33,6 +33,7 @@ jobs:
           done
 
           matching_branches=${matching_branches#,}
+          echo "matching_branches=[${matching_branches}]"
           echo "json_output=[${json_output}]" >> $GITHUB_OUTPUT
     outputs:
       selected-branches: ${{ steps.list-branches.outputs.json_output }}

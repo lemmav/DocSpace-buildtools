@@ -95,12 +95,11 @@ RUN mkdir -p /var/log/onlyoffice && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
-        
-#USER onlyoffice
+
 EXPOSE 5050
 ENTRYPOINT ["python3", "docker-entrypoint.py"]
 
-FROM node:18.12.1-slim as noderun
+FROM node:18-slim as noderun
 ARG BUILD_PATH
 ARG SRC_PATH 
 ENV BUILD_PATH=${BUILD_PATH}
@@ -120,7 +119,7 @@ RUN mkdir -p /var/log/onlyoffice && \
         curl \
         vim \
         python3-pip && \
-    pip3 install --upgrade jsonpath-ng multipledispatch netaddr netifaces && \
+        pip3 install --upgrade jsonpath-ng multipledispatch netaddr netifaces --break-system-packages && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
@@ -153,6 +152,7 @@ COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/docker-entry
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/templates/upstream.conf.template /etc/nginx/templates/upstream.conf.template
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/templates/nginx.conf.template /etc/nginx/nginx.conf.template
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/prepare-nginx-router.sh /docker-entrypoint.d/prepare-nginx-router.sh
+COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/docker-entrypoint.sh /docker-entrypoint.sh
 
 
 # changes for upstream configure

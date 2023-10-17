@@ -24,7 +24,7 @@ jobs:
       - name: List Branches
         id: list-branches
         run: |
-          all_branches=$(git branch --format="%(refname:short)")
+          all_branches=$(git branch -a --format="%(refname:short)")
           matching_branches=""
           for branch in $all_branches; do
             if [[ $branch =~ ^release/v[0-9]+ || $branch =~ ^hotfix/v[0-9]+ || $branch == "develop" ]]; then

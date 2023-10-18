@@ -74,9 +74,12 @@ jobs:
       - name: Build 4testing
         run: |
           cd .${DOCKER_PATH}
-          DOCKER_TAG=2.0.0.${{github.run_number}}
+          if [ "${{ matrix.branch }}" = "develop" ]; then
+            DOCKER_TAG="develop.${{ github.run_number }}"
+          else
+            DOCKER_TAG=$$(echo "${GITHUB_REF_NAME}" | sed '/^release\b\|^hotfix\b/s/release.*\/\|hotfix.*\///')
+          fi
           export DOCKER_TAG
-          echo "matrix.branch2=${{matrix.branch}}"
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.platform=linux/amd64 \

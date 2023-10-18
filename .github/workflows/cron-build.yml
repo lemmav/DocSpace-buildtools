@@ -77,7 +77,7 @@ jobs:
           if [ "${{ matrix.branch }}" = "develop" ]; then
             DOCKER_TAG="develop.${{ github.run_number }}"
           else
-            DOCKER_TAG=$$(echo "${GITHUB_REF_NAME}" | sed '/^release\b\|^hotfix\b/s/release.*\/\|hotfix.*\///')
+            DOCKER_TAG=$(echo "${GITHUB_REF_NAME}" | sed '/^release\b\|^hotfix\b/s/release.*\/\|hotfix.*\///')
           fi
           export DOCKER_TAG
           docker buildx bake -f build.yml \

@@ -78,7 +78,7 @@ jobs:
           export DOCKER_TAG
           echo "matrix.branch2=${{matrix.branch}}"
           docker buildx bake -f build.yml \
-          --set *.args.GIT_BRANCH={{ matrix.branch }} \
+          --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.platform=linux/amd64 \
           --push
         shell: bash

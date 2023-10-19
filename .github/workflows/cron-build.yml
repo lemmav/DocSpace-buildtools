@@ -20,13 +20,11 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
 
       - name: List Branches
         id: list-branches
         run: |
-          all_branches=$(git branch -a --format="%(refname:short)"|sed -e "s/^origin\///")
+          all_branches=$( git ls-remote -hq | sed -n 's/^[0-9a-f]\{40\}\s\+refs\/heads\//''/p')
           matching_branches=""
           for branch in $all_branches; do
             if [[ $branch =~ ^release/v[0-9]+ || $branch =~ ^hotfix/v[0-9]+ || $branch == "develop" ]]; then
@@ -77,7 +75,7 @@ jobs:
           if [ "${{ matrix.branch }}" = "develop" ]; then
             DOCKER_TAG="develop.${{ github.run_number }}"
           else
-            DOCKER_TAG=$(echo "${{ matrix.branch }}" | sed '/^release\b\|^hotfix\b/s/release.*\/\|hotfix.*\///').${{ github.run_number }}
+            DOCKER_TAG=$(echo "${{ matrix.branch }}" | sed '/^release\b\|^hotfix\b\|^feature\b/s/release.*\/\|hotfix.*\/\|feature.*\///; s/-git-action$//; s/^v//').${{github.run_number}}          
           fi
           export DOCKER_TAG
           docker buildx bake -f build.yml \
@@ -85,4 +83,3 @@ jobs:
           --set *.platform=linux/amd64 \
           --push
         shell: bash
-

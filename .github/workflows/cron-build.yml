@@ -35,12 +35,9 @@ jobs:
           REPO_NAME: DocSpace-buildtools
         run: |
           echo "${{ steps.list-branches.outputs.json_output }}"
+
           curl -X POST -u "${{ secrets.USERNAME}}:${{secrets.TOKEN}}" \
           "https://api.github.com/repos/lemmav/DocSpace-buildtools/dispatches" \
           -H "Accept: application/vnd.github.everest-preview+json" \
-          --data '{"event_type": "cron-trigger-action", \ 
-            "client_payload": { \
-              "branches": "${{ steps.list-branches.outputs.json_output }}"" \ 
-            } \
-          }'
+          --data '{"event_type": "cron-trigger-action", "client_payload": { "branches": "${{ steps.list-branches.outputs.json_output }}"}}'
 

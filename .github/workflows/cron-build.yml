@@ -29,7 +29,7 @@ jobs:
           echo "all_branches=${all_branches}"
           echo "matching_branches=[${matching_branches}]"
           echo "json_output=[${matching_branches}]" >> $GITHUB_OUTPUT
-          
+
       - name: Dispatch Action
         env:
           REPO_NAME: DocSpace-buildtools
@@ -40,7 +40,7 @@ jobs:
           -H "Accept: application/vnd.github.everest-preview+json" \
           --data '{"event_type": "cron-trigger-action", \ 
             "client_payload": { \
-              "branches": ${{ steps.list-branches.outputs.json_output }} \ 
+              "branches": "${{ steps.list-branches.outputs.json_output }}"" \ 
             } \
           }'
 

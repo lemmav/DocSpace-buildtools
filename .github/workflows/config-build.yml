@@ -21,30 +21,13 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v2
 
-      - name: List Branches
-        id: list-branches
-        run: |
-          all_branches=$( git ls-remote -hq | sed -n 's/^[0-9a-f]\{40\}\s\+refs\/heads\//''/p')
-          matching_branches=""
-          for branch in $all_branches; do
-            if [[ $branch =~ ^release/v[0-9]+ || $branch =~ ^hotfix/v[0-9]+ || $branch == "develop"|| $branch == "master" ]]; then
-              matching_branches="${matching_branches},\"${branch}\""
-            fi
-          done
-          
-          matching_branches=${matching_branches#,}
-          echo "all_branches=${all_branches}"
-          echo "matching_branches=[${matching_branches}]"
-          echo "json_output=[${matching_branches}]" >> $GITHUB_OUTPUT
-
       - name: Dispatch Action
         env:
           REPO_NAME: DocSpace-buildtools
         run: |
-          echo "${{ steps.list-branches.outputs.json_output }}"
+          echo "${{ github.ref }}"
 
           curl -X POST -u "${{ secrets.USERNAME}}:${{secrets.TOKEN}}" \
           "https://api.github.com/repos/lemmav/DocSpace-buildtools/dispatches" \
           -H "Accept: application/vnd.github.everest-preview+json" \
-          --data '{"event_type": "config-trigger-action", "client_payload": { "branches": ${{ steps.list-branches.outputs.json_output }}}}'
-
+          --data '{"event_type": "config-trigger-action", "client_payload": { "branches": ${{ github.ref }}}}'

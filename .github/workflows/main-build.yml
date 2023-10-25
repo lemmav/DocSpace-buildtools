@@ -7,6 +7,8 @@ on:
     types:
       - trigger-action
       - cron-trigger-action
+      - config-trigger-action
+      
 # on:
 #   workflow_dispatch:
 #   # schedule:

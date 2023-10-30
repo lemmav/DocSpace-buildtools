@@ -39,7 +39,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
       - name: Build 4testing
-        if:  ${{startsWith(github.head_ref, 'hotfix/v**') || startsWith(github.head_ref, 'release/v**')}}
+        if:  startsWith(github.head_ref, 'hotfix/v**')
         run: |
           echo "${{github.head_ref}}"
           cd .${DOCKER_PATH}

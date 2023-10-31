@@ -10,6 +10,7 @@ env:
   REPO: "lemmav"
   DOCKER_IMAGE_PREFIX: "4testing-docspace"
   DOCKERFILE: "Dockerfile.app"
+  FILE: "build.yml"
 
 
 jobs:
@@ -43,10 +44,15 @@ jobs:
         run: |
           echo "${{github.head_ref}}"
           cd .${DOCKER_PATH}
-          DOCKER_TAG=$(echo "${GITHUB_REF_NAME}" | sed '/^release\b\|^hotfix\b\|^feature\b/s/release.*\/\|hotfix.*\/\|feature.*\///; s/-git-action$//; s/^v//').${{github.run_number}}          
-          export DOCKER_TAG
-          docker buildx bake -f build.yml \
-          --set *.args.GIT_BRANCH=${GITHUB_REF_NAME} \
-          --set *.platform=linux/amd64 \
-          --push
+          DOCKER_TAG=$(curl -s -H -X ${REGISTRY_URL}/${COMPANY_NAME}/${PRODUCT_NAME}/tags/?page_size=100 | jq -r '.results|.[]|.name' | grep -E '^[0-9]+(\.[0-9]+){3}$' | head -n1)
+
+          DOCKER_IMAGES=$(grep -oP '(?<=image: ")[^"]+' $FILE | sed -e "s/\${REPO}/$REPO/g ;  s/\${DOCKER_IMAGE_PREFIX}/$DOCKER_IMAGE_PREFIX/g ; s/\${DOCKER_TAG}/$DOCKER_TAG/g" |  tr '\n' ' ' )
+          IFS=" " read -a IMAGES <<< "$DOCKER_IMAGES"
+          
+          for IMAGE in ${IMAGES[@]}; do
+              NEW_IMAGE=$(echo $IMAGE | sed -Ee "s/4testing-//; s/\.[0-9]+$//")
+              docker pull "$IMAGE"
+              docker tag "$IMAGE" "$NEW_IMAGE"
+              docker push "$NEW_IMAGE"
+          done
         shell: bash

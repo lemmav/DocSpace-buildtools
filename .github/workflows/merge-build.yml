@@ -42,7 +42,7 @@ jobs:
       - name: Build 4testing
         if:  ${{startsWith(github.head_ref, 'hotfix/v') || startsWith(github.head_ref, 'release/v')}}
         run: |
-          echo "${{github.head_ref}}"
+          echo "test ${{github.head_ref}}"
           cd .${DOCKER_PATH}
           DOCKER_TAG=$(curl -s -H -X ${REGISTRY_URL}/${COMPANY_NAME}/${PRODUCT_NAME}/tags/?page_size=100 | jq -r '.results|.[]|.name' | grep -E '^[0-9]+(\.[0-9]+){3}$' | head -n1)
 

@@ -53,8 +53,11 @@ jobs:
           
           for IMAGE in ${IMAGES[@]}; do
               NEW_IMAGE=$(echo $IMAGE | sed -Ee "s/4testing-//; s/\.[0-9]+$//")
+              NEW_IMAGE_LATEST=$(echo $IMAGE | sed -Ee "s/4testing-//; s/$DOCKER_TAG/latest/")
               docker pull "$IMAGE"
               docker tag "$IMAGE" "$NEW_IMAGE"
+              docker tag "$IMAGE" "$NEW_IMAGE_LATEST"
               docker push "$NEW_IMAGE"
+              docker push "$NEW_IMAGE_LATEST"
           done
         shell: bash

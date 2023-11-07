@@ -1,0 +1,88 @@
+name: 4testing not-cron multiarch-build
+
+on:
+  workflow_dispatch:
+
+env:
+  DOCKER_PATH: "/install/docker"
+  REPO: "lemmav"
+  DOCKER_IMAGE_PREFIX: "4testing-docspace"
+  DOCKERFILE: "Dockerfile.app"
+
+
+jobs:
+
+  select-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: List Branches
+        id: list-branches
+        run: |
+          all_branches=$(git branch -a --format="%(refname:short)"|sed -e "s/^origin\///")
+          matching_branches=""
+          for branch in $all_branches; do
+            if [[ $branch =~ ^release/v[0-9]+ || $branch =~ ^hotfix/v[0-9]+ || $branch == "develop" ]]; then
+              matching_branches="${matching_branches},\"${branch}\""
+            fi
+          done
+          
+          matching_branches=${matching_branches#,}
+          echo "all_branches=${all_branches}"
+          echo "matching_branches=[${matching_branches}]"
+          echo "json_output=[${matching_branches}]" >> $GITHUB_OUTPUT
+    outputs:
+      selected-branches: ${{ steps.list-branches.outputs.json_output }}
+
+
+  build:
+    needs: select-branches
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux/amd64]
+        branch: ${{ fromJson(needs.select-branches.outputs.selected-branches) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc
+          sudo docker image prune --all --force
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Expose GitHub Runtime
+        uses: crazy-max/ghaction-github-runtime@v3
+
+      - name: Build 4testing
+        run: |
+          cd .${DOCKER_PATH}
+          DOCKER_TAG=2.0.0.${{github.run_number}}
+          export DOCKER_TAG
+          echo "matrix.branch2=${{matrix.branch}}"
+          docker buildx bake -f build.yml \
+          --set *.args.GIT_BRANCH=${{ matrix.branch }} \
+          --set *.platform=linux/amd64 \
+          --set *.cache-from=type=gha \
+          --set *.cache-to=type=gha \
+          --push 
+        shell: bash
+

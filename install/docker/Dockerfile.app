@@ -40,7 +40,7 @@ RUN apt-get -y update && \
 
 ADD https://api.github.com/repos/lemmav/DocSpace/git/refs/heads/${GIT_BRANCH} version.json
 RUN echo ${GIT_BRANCH}  && \
-    git clone --recurse-submodules -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace.git ${SRC_PATH}
+    git clone --depth 1 --recurse-submodules -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace.git ${SRC_PATH}
 
 RUN cd ${SRC_PATH} && \
     mkdir -p /app/onlyoffice/config/ && \

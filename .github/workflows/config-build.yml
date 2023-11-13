@@ -7,7 +7,6 @@ on:
       - 'hotfix/v*'
       - 'release/v*'
       - 'develop'
-      - 'master'
     paths:
       - 'config/**'
   workflow_dispatch:

@@ -1,37 +1,22 @@
 name: 4testing multiarch-build
 
-
 on:
-  workflow_dispatch:
   repository_dispatch:
     types:
-      - trigger-action
       - cron-trigger-action
       - config-trigger-action
-      
-# on:
-#   workflow_dispatch:
-#   # schedule:
-#     # - cron: '*/15 * * * *'
-#     # - cron: '0 0 * * 0'
+      - client-trigger-action
+      - server-trigger-action
+
 env:
   DOCKER_PATH: "/install/docker"
-  REPO: "lemmav"
+  REPO: "onlyoffice"
   DOCKER_IMAGE_PREFIX: "4testing-docspace"
   DOCKERFILE: "Dockerfile.app"
 
-
 jobs:
 
-  select-branches:
-    runs-on: self-hosted
-
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v2
-
   build:
-    needs: select-branches
     runs-on: ubuntu-latest
     strategy:
       matrix:

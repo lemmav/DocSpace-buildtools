@@ -10,7 +10,7 @@ on:
 
 env:
   DOCKER_PATH: "/install/docker"
-  REPO: "onlyoffice"
+  REPO: "lemmav"
   DOCKER_IMAGE_PREFIX: "4testing-docspace"
   DOCKERFILE: "Dockerfile.app"
 

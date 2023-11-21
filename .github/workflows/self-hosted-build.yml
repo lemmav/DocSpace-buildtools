@@ -44,20 +44,20 @@ jobs:
           docker network create -d bridge onlyoffice
           sleep 30
           docker-compose -f db.yml up -d
-          sleep 30
-          docker-compose -f elasticsearch.yml up -d
-          sleep 30
-          docker-compose -f redis.yml up -d
-          sleep 30
-          docker-compose -f rabbitmq.yml up -d
-          sleep 30
-          docker-compose -f healthchecks.yml up -d
-          sleep 30
-          docker-compose -f migration-runner.yml up -d
-          sleep 30
-          docker-compose -f docspace.yml up -d
-          sleep 30
-          docker-compose -f notify.yml up -d
+          # sleep 30
+          # docker-compose -f elasticsearch.yml up -d
+          # sleep 30
+          # docker-compose -f redis.yml up -d
+          # sleep 30
+          # docker-compose -f rabbitmq.yml up -d
+          # sleep 30
+          # docker-compose -f healthchecks.yml up -d
+          # sleep 30
+          # docker-compose -f migration-runner.yml up -d
+          # sleep 30
+          # docker-compose -f docspace.yml up -d
+          # sleep 30
+          # docker-compose -f notify.yml up -d
 
           for CONTAINER_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
             CONTAINER_IDS=$(docker-compose -f ${CONTAINER_NAME}.yml ps -q --all)

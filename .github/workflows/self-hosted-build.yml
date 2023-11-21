@@ -47,17 +47,17 @@ jobs:
           sleep 30
           docker-compose -f elasticsearch.yml up -d
           sleep 30
-          # docker-compose -f redis.yml up -d
-          # sleep 30
-          # docker-compose -f rabbitmq.yml up -d
-          # sleep 30
-          # docker-compose -f healthchecks.yml up -d
-          # sleep 30
-          # docker-compose -f migration-runner.yml up -d
-          # sleep 30
-          # docker-compose -f docspace.yml up -d
-          # sleep 30
-          # docker-compose -f notify.yml up -d
+          docker-compose -f redis.yml up -d
+          sleep 30
+          docker-compose -f rabbitmq.yml up -d
+          sleep 30
+          docker-compose -f healthchecks.yml up -d
+          sleep 30
+          docker-compose -f migration-runner.yml up -d
+          sleep 30
+          docker-compose -f docspace.yml up -d
+          sleep 30
+          docker-compose -f notify.yml up -d
 
           HAS_ERROR=false
           CONTAINER_IDS=$(docker-compose -f docspace.yml ps -q --all)

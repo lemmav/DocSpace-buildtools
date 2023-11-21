@@ -44,11 +44,11 @@ jobs:
           docker network create -d bridge onlyoffice
           sleep 30
           docker-compose -f db.yml up -d
-          # sleep 30
-          # docker-compose -f elasticsearch.yml up -d
-          # sleep 30
-          # docker-compose -f redis.yml up -d
-          # sleep 30
+          sleep 30
+          docker-compose -f elasticsearch.yml up -d
+          sleep 30
+          docker-compose -f redis.yml up -d
+          sleep 30
           # docker-compose -f rabbitmq.yml up -d
           # sleep 30
           # docker-compose -f healthchecks.yml up -d
@@ -59,20 +59,22 @@ jobs:
           # sleep 30
           # docker-compose -f notify.yml up -d
 
-          for CONTAINER_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
-            CONTAINER_IDS=$(docker-compose ps -q --all)
-            for CONTAINER_ID in $CONTAINER_IDS; do
-              CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
-              CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
-              if [ "$CONTAINER_STATUS" == "running" ] ; then
-                echo "$CONTAINER_NAME container is running."
-              else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
-                exit 1
-              fi
-            done
-
+          HAS_ERROR=false
+          CONTAINER_IDS=$(docker-compose ps -q --all)
+          for CONTAINER_ID in $CONTAINER_IDS; do
+            CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
+            CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
+            if [ "$CONTAINER_STATUS" == "running" ] ; then
+              echo "$CONTAINER_NAME container is running."
+            else
+              echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
+              HAS_ERROR=true
+            fi
           done
+          if [ "$HAS_ERROR" = true ]; then
+            exit 1
+          fi
+
           
 
           

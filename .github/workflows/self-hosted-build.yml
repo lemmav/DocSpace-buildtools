@@ -45,8 +45,6 @@ jobs:
 
           DOCKER_IMAGES=$(grep -oP '(?<=image: ")[^"]+' $FILE | sed -e "s/\${REPO}/$REPO/g ;  s/\${DOCKER_IMAGE_PREFIX}/$DOCKER_IMAGE_PREFIX/g ; s/\${DOCKER_TAG}/$DOCKER_TAG/g" |  tr '\n' ' ' )
           IFS=" " read -a IMAGES <<< "$DOCKER_IMAGES"
-
-          docker network create -d bridge onlyoffice
           
           for IMAGE in ${IMAGES[@]}; do
               NEW_IMAGE=$(echo $IMAGE | sed -Ee "s/4testing-//; s/\.[0-9]+$//")

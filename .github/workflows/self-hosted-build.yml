@@ -43,13 +43,13 @@ jobs:
           cd .${DOCKER_PATH}
           docker network create -d bridge onlyoffice
           sleep 30
-          docker-compose -f db.yml up -d
+          docker-compose  db.yml up -d
           sleep 30
-          docker-compose -f elasticsearch.yml up -d
+          docker-compose  elasticsearch.yml up -d
           sleep 30
-          docker-compose -f redis.yml up -d
+          docker-compose  redis.yml up -d
           sleep 30
-          docker-compose -f rabbitmq.yml up -d
+          docker-compose rabbitmq.yml up -d
           sleep 30
           # docker-compose -f healthchecks.yml up -d
           # sleep 30

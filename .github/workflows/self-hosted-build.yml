@@ -60,7 +60,7 @@ jobs:
           # docker-compose -f notify.yml up -d
 
           HAS_ERROR=false
-          CONTAINER_IDS=$(docker-compose ps -q --all)
+          CONTAINER_IDS=$(docker-compose -f docspace.yml ps -q --all)
           for CONTAINER_ID in $CONTAINER_IDS; do
             CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
             CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
@@ -74,6 +74,7 @@ jobs:
           if [ "$HAS_ERROR" = true ]; then
             exit 1
           fi
+
 
           
 

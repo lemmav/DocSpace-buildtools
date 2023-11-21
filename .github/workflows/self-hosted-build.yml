@@ -60,16 +60,18 @@ jobs:
           # docker-compose -f notify.yml up -d
 
           for CONTAINER_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
-            CONTAINER_IDS=$(docker-compose -f ${CONTAINER_NAME}.yml ps -q --all)
+            CONTAINER_IDS=$(docker-compose ps -q --all)
             for CONTAINER_ID in $CONTAINER_IDS; do
-            CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
-            if [ "$CONTAINER_STATUS" == "restarting" ] || [ "$CONTAINER_STATUS" == "exited" ]; then
+              CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
+              CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
+              if [ "$CONTAINER_STATUS" == "running" ] ; then
+                echo "$CONTAINER_NAME container is running."
+              else
                 echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
                 exit 1
-            else
-                echo "$CONTAINER_NAME container is running."
-            fi
+              fi
             done
+
           done
           
 

@@ -41,47 +41,37 @@ jobs:
         run: |
           echo "test ${{github.head_ref}}"
           cd .${DOCKER_PATH}
-          DOCKER_TAG=$(curl -s -H -X ${REGISTRY_URL}/${REPO}/${PRODUCT_NAME}/tags/?page_size=100 | jq -r '.results|.[]|.name' | grep -E '^[0-9]+(\.[0-9]+){3}$' | head -n1)
-
-          DOCKER_IMAGES=$(grep -oP '(?<=image: ")[^"]+' $FILE | sed -e "s/\${REPO}/$REPO/g ;  s/\${DOCKER_IMAGE_PREFIX}/$DOCKER_IMAGE_PREFIX/g ; s/\${DOCKER_TAG}/$DOCKER_TAG/g" |  tr '\n' ' ' )
-          IFS=" " read -a IMAGES <<< "$DOCKER_IMAGES"
-
           docker network create -d bridge onlyoffice
-          
-          for IMAGE in ${IMAGES[@]}; do
-              NEW_IMAGE=$(echo $IMAGE | sed -Ee "s/4testing-//; s/\.[0-9]+$//")
-              NEW_IMAGE_LATEST=$(echo $IMAGE | sed -Ee "s/4testing-//; s/$DOCKER_TAG/latest/")
-              
-              sleep 30
-              docker-compose -f db.yml up -d
-              sleep 30
-              docker-compose -f elasticsearch.yml up -d
-              sleep 30
-              docker-compose -f redis.yml up -d
-              sleep 30
-              docker-compose -f rabbitmq.yml up -d
-              sleep 30
-              docker-compose -f healthchecks.yml up -d
-              sleep 30
-              docker-compose -f migration-runner.yml up -d
-              sleep 30
-              docker-compose -f docspace.yml up -d
-              sleep 30
-              docker-compose -f notify.yml up -d
+          sleep 30
+          docker-compose -f db.yml up -d
+          sleep 30
+          docker-compose -f elasticsearch.yml up -d
+          sleep 30
+          docker-compose -f redis.yml up -d
+          sleep 30
+          docker-compose -f rabbitmq.yml up -d
+          sleep 30
+          docker-compose -f healthchecks.yml up -d
+          sleep 30
+          docker-compose -f migration-runner.yml up -d
+          sleep 30
+          docker-compose -f docspace.yml up -d
+          sleep 30
+          docker-compose -f notify.yml up -d
 
-              for CONTAINER_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
-                CONTAINER_IDS=$(docker-compose -f ${CONTAINER_NAME}.yml ps -q --all)
-                for CONTAINER_ID in $CONTAINER_IDS; do
-                CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
-                if [ "$CONTAINER_STATUS" == "restarting" ] || [ "$CONTAINER_STATUS" == "exited" ]; then
-                    echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
-                    exit 1
-                else
-                    echo "$CONTAINER_NAME container is running."
-                fi
-                done
-              done
+          for CONTAINER_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
+            CONTAINER_IDS=$(docker-compose -f ${CONTAINER_NAME}.yml ps -q --all)
+            for CONTAINER_ID in $CONTAINER_IDS; do
+            CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
+            if [ "$CONTAINER_STATUS" == "restarting" ] || [ "$CONTAINER_STATUS" == "exited" ]; then
+                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
+                exit 1
+            else
+                echo "$CONTAINER_NAME container is running."
+            fi
+            done
           done
+          
 
           
         shell: bash

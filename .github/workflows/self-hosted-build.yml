@@ -97,4 +97,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: logs
-          path: logs.txt
+          path: ${{ env.DOCKER_PATH }}/logs.txt

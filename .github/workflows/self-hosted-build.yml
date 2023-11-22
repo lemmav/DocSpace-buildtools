@@ -60,22 +60,23 @@ jobs:
           docker-compose -f notify.yml up -d
 
           HAS_ERROR=false
+          LOG_FILE="logs.txt"
           CONTAINER_IDS=$(docker-compose -f docspace.yml ps -q --all)
           for CONTAINER_ID in $CONTAINER_IDS; do
             CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
             CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
             if [ "$CONTAINER_NAME" == "/onlyoffice-migration-runner" ] ; then
               if [ "$CONTAINER_STATUS" == "exited" ] ; then
-                echo "$CONTAINER_NAME container has successfully exited."
+                echo "$CONTAINER_NAME container has successfully exited." >> $LOG_FILE
               else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
+                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> $LOG_FILE
                 HAS_ERROR=true
               fi
             else 
               if [ "$CONTAINER_STATUS" == "running" ] ; then
-                echo "$CONTAINER_NAME container is running."
+                echo "$CONTAINER_NAME container is running." >> $LOG_FILE
               else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS."
+                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> $LOG_FILE
                 HAS_ERROR=true
               fi
             fi

@@ -41,6 +41,7 @@ jobs:
         run: |
           echo "test ${{github.head_ref}}"
           cd .${DOCKER_PATH}
+
           NETWORK_NAME="onlyoffice"
           NETWORK_EXISTS=$(docker network ls --filter name=$NETWORK_NAME -q)
           if [ -z "$NETWORK_EXISTS" ]; then
@@ -68,34 +69,32 @@ jobs:
           docker-compose -f notify.yml up -d
 
           HAS_ERROR=false
-          LOG_FILE="logs.txt"
           CONTAINER_IDS=$(docker-compose -f docspace.yml ps -q --all)
           for CONTAINER_ID in $CONTAINER_IDS; do
             CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
             CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
             if [ "$CONTAINER_NAME" == "/onlyoffice-migration-runner" ] ; then
               if [ "$CONTAINER_STATUS" == "exited" ] ; then
-                echo "$CONTAINER_NAME container has successfully exited." >> $LOG_FILE
+                echo "$CONTAINER_NAME container has successfully exited." >> logs.txt
               else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> $LOG_FILE
+                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
                 HAS_ERROR=true
               fi
             else 
               if [ "$CONTAINER_STATUS" == "running" ] ; then
-                echo "$CONTAINER_NAME container is running." >> $LOG_FILE
+                echo "$CONTAINER_NAME container is running." >> logs.txt
               else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> $LOG_FILE
+                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
                 HAS_ERROR=true
               fi
             fi
           done
           if [ "$HAS_ERROR" = true ]; then
             exit 1
-          fi
-
-
-
-          
-
-          
+          fi          
         shell: bash
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: logs
+          path: logs.txt

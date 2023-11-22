@@ -41,22 +41,30 @@ jobs:
         run: |
           echo "test ${{github.head_ref}}"
           cd .${DOCKER_PATH}
-          docker network create -d bridge onlyoffice
-          sleep 30
+          NETWORK_NAME="onlyoffice"
+          NETWORK_EXISTS=$(docker network ls --filter name=$NETWORK_NAME -q)
+          if [ -z "$NETWORK_EXISTS" ]; then
+            echo "Creating Docker network: $NETWORK_NAME"
+            docker network create -d bridge $NETWORK_NAME
+          else
+            echo "Docker network $NETWORK_NAME already exists."
+          fi
+
+          sleep 10
           docker-compose -f db.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f elasticsearch.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f redis.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f rabbitmq.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f healthchecks.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f migration-runner.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f docspace.yml up -d
-          sleep 30
+          sleep 10
           docker-compose -f notify.yml up -d
 
           HAS_ERROR=false

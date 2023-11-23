@@ -69,11 +69,10 @@ jobs:
           docker-compose -f notify.yml up -d
 
           HAS_ERROR=false
-          CONTAINER_IDS=$(docker-compose -f docspace.yml ps -q --all)
-          for CONTAINER_ID in $CONTAINER_IDS; do
-            CONTAINER_NAME=$(docker inspect -f '{{.Name}}' $CONTAINER_ID)
-            CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_ID)
-            if [ "$CONTAINER_NAME" == "/onlyoffice-migration-runner" ] ; then
+          CONTAINER_NAMES=$(docker-compose -f docspace.yml ps --all | grep onlyoffice | awk '{print $1}')
+          for CONTAINER_NAME in $CONTAINER_NAMES; do
+            CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME)
+            if [ "$CONTAINER_NAME" == "onlyoffice-migration-runner" ] ; then
               if [ "$CONTAINER_STATUS" == "exited" ] ; then
                 echo "$CONTAINER_NAME container has successfully exited." >> logs.txt
               else
@@ -92,7 +91,8 @@ jobs:
           if [ "$HAS_ERROR" = true ]; then
             exit 1
           fi         
-          echo "artifactPath=$PWD" >> $GITHUB_ENV 
+          echo "artifactPath=$PWD" >> $GITHUB_ENV
+
         shell: bash
 
       - uses: actions/upload-artifact@v3

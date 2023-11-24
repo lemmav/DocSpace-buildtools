@@ -117,10 +117,11 @@ jobs:
               exit 1
             fi         
             echo "artifactPath=$PWD" >> $GITHUB_ENV
+            echo "artifactName=${{ matrix.branch }}-logs" | sed 's/\///g' >> $GITHUB_ENV
           done
         shell: bash
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.branch }}-logs
+          name: ${{ env.artifactName }}
           path: ${{ env.artifactPath }}/logs.txt

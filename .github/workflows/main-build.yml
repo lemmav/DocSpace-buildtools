@@ -54,8 +54,73 @@ jobs:
             DOCKER_TAG=$(echo "${{ matrix.branch }}" | sed '/^release\b\|^hotfix\b\|^feature\b/s/release.*\/\|hotfix.*\/\|feature.*\///; s/-git-action$//; s/^v//').${{github.run_number}}          
           fi
           export DOCKER_TAG
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.platform=linux/amd64 \
           --push
         shell: bash
+
+      - name: Test Container
+        run: |
+          echo "test ${{github.head_ref}}"
+          cd .${DOCKER_PATH}
+
+          NETWORK_NAME="onlyoffice"
+          NETWORK_EXISTS=$(docker network ls --filter name=$NETWORK_NAME -q)
+          if [ -z "$NETWORK_EXISTS" ]; then
+            echo "Creating Docker network: $NETWORK_NAME"
+            docker network create -d bridge $NETWORK_NAME
+          else
+            echo "Docker network $NETWORK_NAME already exists."
+          fi
+
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f db.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f elasticsearch.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f redis.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f rabbitmq.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f healthchecks.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f migration-runner.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f docspace.yml up -d
+          sleep 10
+          DOCKER_TAG=${{ env.DOCKER_TAG }} docker-compose -f notify.yml up -d
+
+          HAS_ERROR=false
+          for FILE_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
+            CONTAINER_NAMES=$(docker-compose -f ${FILE_NAME}.yml ps --all | grep onlyoffice | awk '{print $1}')
+            for CONTAINER_NAME in $CONTAINER_NAMES; do
+              CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME)
+              if [ "$CONTAINER_NAME" == "onlyoffice-migration-runner" ] ; then
+                if [ "$CONTAINER_STATUS" == "exited" ] ; then
+                  echo "$CONTAINER_NAME container has successfully exited." >> logs.txt
+                else
+                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
+                  HAS_ERROR=true
+                fi
+              else 
+                if [ "$CONTAINER_STATUS" == "running" ] ; then
+                  echo "$CONTAINER_NAME container is running." >> logs.txt
+                else
+                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
+                  HAS_ERROR=true
+                fi
+              fi
+            done
+            if [ "$HAS_ERROR" = true ]; then
+              exit 1
+            fi         
+            echo "artifactPath=$PWD" >> $GITHUB_ENV
+          done
+        shell: bash
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: logs
+          path: ${{ env.artifactPath }}/logs.txt

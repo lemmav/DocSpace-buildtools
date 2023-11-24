@@ -99,16 +99,16 @@ jobs:
               CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME)
               if [ "$CONTAINER_NAME" == "onlyoffice-migration-runner" ] ; then
                 if [ "$CONTAINER_STATUS" == "exited" ] ; then
-                  echo "$CONTAINER_NAME container has successfully exited." >> ${{ matrix.branch }}-logs.txt
+                  echo "$CONTAINER_NAME container has successfully exited." >> logs.txt
                 else
-                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> ${{ matrix.branch }}-logs.txt
+                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
                   HAS_ERROR=true
                 fi
               else 
                 if [ "$CONTAINER_STATUS" == "running" ] ; then
-                  echo "$CONTAINER_NAME container is running." >> ${{ matrix.branch }}-logs.txt
+                  echo "$CONTAINER_NAME container is running." >> logs.txt
                 else
-                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> ${{ matrix.branch }}-logs.txt
+                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
                   HAS_ERROR=true
                 fi
               fi
@@ -122,5 +122,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: logs
-          path: ${{ env.artifactPath }}/${{ matrix.branch }}-logs.txt
+          name: ${{ matrix.branch }}-logs
+          path: ${{ env.artifactPath }}/logs.txt

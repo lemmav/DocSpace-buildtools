@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         platform: [linux/amd64]
@@ -64,30 +64,31 @@ jobs:
           docker-compose -f notify.yml up -d
 
           HAS_ERROR=false
-          CONTAINER_NAMES=$(docker-compose -f docspace.yml ps --all | grep onlyoffice | awk '{print $1}')
-          for CONTAINER_NAME in $CONTAINER_NAMES; do
-            CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME)
-            if [ "$CONTAINER_NAME" == "onlyoffice-migration-runner" ] ; then
-              if [ "$CONTAINER_STATUS" == "exited" ] ; then
-                echo "$CONTAINER_NAME container has successfully exited." >> logs.txt
-              else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
-                HAS_ERROR=true
+          for CONTAINER_NAME in db elasticsearch redis rabbitmq healthchecks migration-runner docspace notify; do
+            CONTAINER_NAMES=$(docker-compose -f ${CONTAINER_NAME}.yml ps --all | grep onlyoffice | awk '{print $1}')
+            for CONTAINER_NAME in $CONTAINER_NAMES; do
+              CONTAINER_STATUS=$(docker inspect -f '{{.State.Status}}' $CONTAINER_NAME)
+              if [ "$CONTAINER_NAME" == "onlyoffice-migration-runner" ] ; then
+                if [ "$CONTAINER_STATUS" == "exited" ] ; then
+                  echo "$CONTAINER_NAME container has successfully exited." >> logs.txt
+                else
+                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
+                  HAS_ERROR=true
+                fi
+              else 
+                if [ "$CONTAINER_STATUS" == "running" ] ; then
+                  echo "$CONTAINER_NAME container is running." >> logs.txt
+                else
+                  echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
+                  HAS_ERROR=true
+                fi
               fi
-            else 
-              if [ "$CONTAINER_STATUS" == "running" ] ; then
-                echo "$CONTAINER_NAME container is running." >> logs.txt
-              else
-                echo "Error: $CONTAINER_NAME container is $CONTAINER_STATUS." >> logs.txt
-                HAS_ERROR=true
-              fi
-            fi
+            done
+            if [ "$HAS_ERROR" = true ]; then
+              exit 1
+            fi         
+            echo "artifactPath=$PWD" >> $GITHUB_ENV
           done
-          if [ "$HAS_ERROR" = true ]; then
-            exit 1
-          fi         
-          echo "artifactPath=$PWD" >> $GITHUB_ENV
-
         shell: bash
 
       - uses: actions/upload-artifact@v3

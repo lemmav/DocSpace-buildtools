@@ -126,15 +126,16 @@ jobs:
           cd .${DOCKER_PATH}
           export DOCKER_TAG=${{ env.DOCKER_TAG }}
           echo "List of local images with tag $DOCKER_TAG:"
-          docker images --filter=reference="*:${DOCKER_TAG}" --format "{{.Repository}}:{{.Tag}}"
-          images=$(docker images --filter=reference="*:${DOCKER_TAG}" --format "{{.Repository}}")
+
+          images=$(docker images | grep $DOCKER_TAG | awk '{print $1}')
+          echo "Local images with tag $DOCKER_TAG:"
+          echo "$images"
           for image in $images
           do
-            echo "Executing docker push for image: $image"
-            docker push $image
+              full_image_name="$image:$DOCKER_TAG"
+              echo "Pushing $full_image_name"
+              docker push $full_image_name
           done
-
-
         shell: bash
 
       - uses: actions/upload-artifact@v3

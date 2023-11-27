@@ -58,7 +58,7 @@ jobs:
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.platform=linux/amd64 \
-          --push
+          --load
         shell: bash
 
       - name: Test Container

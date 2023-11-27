@@ -123,6 +123,7 @@ jobs:
 
       - name: Build 4push 
         run: |
+          cd .${DOCKER_PATH}
           export DOCKER_TAG=${{ env.DOCKER_TAG }}
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \

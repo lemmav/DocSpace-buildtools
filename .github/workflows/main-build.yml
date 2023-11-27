@@ -125,10 +125,16 @@ jobs:
         run: |
           cd .${DOCKER_PATH}
           export DOCKER_TAG=${{ env.DOCKER_TAG }}
-          docker buildx bake -f build.yml \
-          --set *.args.GIT_BRANCH=${{ matrix.branch }} \
-          --set *.platform=linux/amd64 \
-          --push
+          echo "List of local images with tag $DOCKER_TAG:"
+          docker images --filter=reference="*:${DOCKER_TAG}" --format "{{.Repository}}:{{.Tag}}"
+          images=$(docker images --filter=reference="*:${DOCKER_TAG}" --format "{{.Repository}}")
+          for image in $images
+          do
+            echo "Executing docker push for image: $image"
+            docker push $image
+          done
+
+
         shell: bash
 
       - uses: actions/upload-artifact@v3

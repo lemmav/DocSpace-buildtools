@@ -45,7 +45,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Build 4testing
+      - name: Build 4load 
         run: |
           cd .${DOCKER_PATH}
           if [ "${{ matrix.branch }}" = "develop" ]; then
@@ -119,6 +119,15 @@ jobs:
             echo "artifactPath=$PWD" >> $GITHUB_ENV
             echo "artifactName=${{ matrix.branch }}-logs" | sed 's/\///g' >> $GITHUB_ENV
           done
+        shell: bash
+
+      - name: Build 4push 
+        run: |
+          export DOCKER_TAG=${{ env.DOCKER_TAG }}
+          docker buildx bake -f build.yml \
+          --set *.args.GIT_BRANCH=${{ matrix.branch }} \
+          --set *.platform=linux/amd64 \
+          --push
         shell: bash
 
       - uses: actions/upload-artifact@v3

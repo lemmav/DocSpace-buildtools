@@ -1,6 +1,12 @@
 name: 4testing multiarch-build
 
 on:
+  workflow_dispatch:
+    inputs:
+      zap:
+        description: 'Run ZAP scanning after build?'
+        type: boolean
+
   repository_dispatch:
     types:
       - cron-trigger-action
@@ -45,7 +51,8 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Build 4load 
+      - name: Build 4load
+        id: build
         run: |
           cd .${DOCKER_PATH}
           if [ "${{ matrix.branch }}" = "develop" ]; then
@@ -59,6 +66,7 @@ jobs:
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.platform=linux/amd64 \
           --load
+          echo "version=${DOCKER_TAG}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Test Container
@@ -133,3 +141,18 @@ jobs:
         with:
           name: ${{ env.artifactName }}
           path: ${{ env.artifactPath }}/logs.txt
+
+      - name: Run zap action if needed
+        if: ${{ github.event.action == 'cron-trigger-action' || github.event_name == 'workflow_dispatch' }}
+        env:
+          RUN_ZAP: ${{ github.event.inputs.zap || 'true' }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          VERSION: ${{ steps.build.outputs.version }}
+        shell: bash
+        run: |
+           if [[ ${{ matrix.branch }} =~ release || ${{ matrix.branch }} =~ hotfix && ${RUN_ZAP} == true ]]; then
+              gh workflow run zap-scan.yaml \
+                 --repo ONLYOFFICE/DocSpace \
+                 -f branch=${{ matrix.branch }} \
+                 -f version=${VERSION}
+           fi

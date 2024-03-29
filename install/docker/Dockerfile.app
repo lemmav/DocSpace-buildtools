@@ -39,10 +39,10 @@ RUN apt-get -y update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-ADD https://api.github.com/repos/lemmav/DocSpace-buildtools/git/refs/heads/${GIT_BRANCH} version.json
-RUN git clone -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace-buildtools.git ${SRC_PATH}/buildtools && \
-    git clone --recurse-submodules -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace-Server.git ${SRC_PATH}/server && \
-    git clone -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace-Client.git ${SRC_PATH}/client
+ADD https://api.github.com/repos/ONLYOFFICE/DocSpace-buildtools/git/refs/heads/${GIT_BRANCH} version.json
+RUN git clone -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-buildtools.git ${SRC_PATH}/buildtools && \
+    git clone --recurse-submodules -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Server.git ${SRC_PATH}/server && \
+    git clone -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Client.git ${SRC_PATH}/client
 
 RUN cd ${SRC_PATH} && \
     mkdir -p /app/onlyoffice/config/ && \

@@ -354,10 +354,11 @@ ENTRYPOINT ["./docker-migration-entrypoint.sh"]
 
 ## image for k8s bin-share ##
 FROM busybox:latest AS bin_share
-RUN mkdir -p /app/ASC.Files/server && \
+RUN addgroup --system --gid 107 onlyoffice && \
+    adduser -u 104 onlyoffice --home /var/www/onlyoffice --system -G onlyoffice \
+    mkdir -p /app/ASC.Files/server && \
     mkdir -p /app/ASC.People/server && \
-    addgroup --system --gid 107 onlyoffice && \
-    adduser -u 104 onlyoffice --home /var/www/onlyoffice --system -G onlyoffice
+    
 
 USER onlyoffice
 
@@ -368,7 +369,9 @@ ENTRYPOINT ["./app/docker-entrypoint.sh"]
 
 ## image for k8s wait-bin-share ##
 FROM busybox:latest AS wait_bin_share
-RUN mkdir /app
+RUN addgroup --system --gid 107 onlyoffice && \
+    adduser -u 104 onlyoffice --home /var/www/onlyoffice --system -G onlyoffice \
+    mkdir /app
 
 USER onlyoffice
 

@@ -257,14 +257,14 @@ CMD ["ASC.Files.dll", "ASC.Files"]
 FROM dotnetrun AS files_services
 ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
 WORKDIR ${BUILD_PATH}/products/ASC.Files/service/
-
+USER root
 RUN  echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list && \
      apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3B4FE6ACC0B21F32 && \
      apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 871920D1991BC93C && \
      apt-get -y update && \
      apt-get install -yq libssl1.1 && \
      rm -rf /var/lib/apt/lists/*
-
+USER onlyoffice
 COPY --chown=onlyoffice:onlyoffice docker-entrypoint.py ./docker-entrypoint.py
 COPY --from=base --chown=onlyoffice:onlyoffice ${BUILD_PATH}/services/ASC.Files.Service/service/ .
 COPY --from=onlyoffice/ffvideo:6.0 --chown=onlyoffice:onlyoffice /usr/local /usr/local/
@@ -364,9 +364,8 @@ FROM busybox:latest AS bin_share
 RUN addgroup --system --gid 107 onlyoffice && \
     adduser -u 104 onlyoffice --home /var/www/onlyoffice --system -G onlyoffice \
     mkdir -p /app/ASC.Files/server && \
-    mkdir -p /app/ASC.People/server && \
+    mkdir -p /app/ASC.People/server && 
     
-
 USER onlyoffice
 
 COPY --chown=onlyoffice:onlyoffice bin-share-docker-entrypoint.sh /app/docker-entrypoint.sh
@@ -377,7 +376,7 @@ ENTRYPOINT ["./app/docker-entrypoint.sh"]
 ## image for k8s wait-bin-share ##
 FROM busybox:latest AS wait_bin_share
 RUN addgroup --system --gid 107 onlyoffice && \
-    adduser -u 104 onlyoffice --home /var/www/onlyoffice --system -G onlyoffice \
+    adduser -u 104 onlyoffice --home /var/www/onlyoffice --system -G onlyoffice &&\   
     mkdir /app
 
 USER onlyoffice

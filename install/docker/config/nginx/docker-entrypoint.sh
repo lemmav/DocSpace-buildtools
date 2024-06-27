@@ -2,7 +2,7 @@
 # vim:sw=4:ts=4:et
 
 set -e
-
+echo "wow test"
 entrypoint_log() {
     if [ -z "${NGINX_ENTRYPOINT_QUIET_LOGS:-}" ]; then
         echo "$@"

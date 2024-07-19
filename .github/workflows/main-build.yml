@@ -54,7 +54,7 @@ jobs:
         id: build
         run: |
           cd .${DOCKER_PATH}
-          if [[ $branch =~ ^release/v[0-9]+ ]]; then
+          if [ "${{ matrix.branch }}" = "develop" ]; then
             PRODUCT_VERSION="develop"
             DOCKER_TAG=${PRODUCT_VERSION}.${{ github.run_number }}
           else

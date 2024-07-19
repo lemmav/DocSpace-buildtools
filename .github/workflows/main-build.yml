@@ -16,7 +16,7 @@ on:
 
 env:
   DOCKER_PATH: "/install/docker"
-  REPO: "onlyoffice"
+  REPO: "lemmav"
   DOCKER_IMAGE_PREFIX: "4testing-docspace"
   DOCKERFILE: "Dockerfile.app"
 
@@ -73,18 +73,3 @@ jobs:
 
           echo "version=${DOCKER_TAG}" >> "$GITHUB_OUTPUT"
         shell: bash
-
-      - name: Run zap action if needed
-        if: ${{ github.event.action == 'cron-trigger-action' || github.event_name == 'workflow_dispatch' }}
-        env:
-          RUN_ZAP: ${{ github.event.inputs.zap || 'true' }}
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-          VERSION: ${{ steps.build.outputs.version }}
-        shell: bash
-        run: |
-           if [[ ${{ matrix.branch }} =~ release || ${{ matrix.branch }} =~ hotfix && ${RUN_ZAP} == true ]]; then
-              gh workflow run zap-scan.yaml \
-                 --repo ONLYOFFICE/DocSpace \
-                 -f branch=${{ matrix.branch }} \
-                 -f version=${VERSION}
-           fi

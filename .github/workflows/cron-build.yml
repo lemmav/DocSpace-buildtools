@@ -21,7 +21,7 @@ jobs:
           matching_branches=""
 
           for branch in $all_branches; do
-            if [[ $branch == "develop" ]]; then
+            if [[ $branch =~ ^release/v[0-9]+  ]]; then
               matching_branches="${matching_branches},\"${branch}\""
             fi
           done

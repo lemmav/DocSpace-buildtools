@@ -62,6 +62,9 @@ jobs:
             DOCKER_TAG=${PRODUCT_VERSION}.${{github.run_number}}
           fi
           export DOCKER_TAG
+          echo "buildtools=${{ github.event.client_payload.buildtools }}"
+          echo "client=${{ github.event.client_payload.buildtools }}" 
+          echo "server=${{ github.event.client_payload.buildtools }}" 
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.args.PRODUCT_VERSION=${PRODUCT_VERSION} \
@@ -69,6 +72,9 @@ jobs:
           --set *.platform=linux/amd64 \
           --set *.args.PRODUCT_VERSION=${PRODUCT_VERSION} \
           --set *.args.BUILD_NUMBER=${{github.run_number}} \
+          --set *.args.BUILDTOOLS_COMMIT=${{ github.event.client_payload.buildtools }} \
+          --set *.args.CLIENT_COMMIT=${{ github.event.client_payload.client }} \
+          --set *.args.SERVER_COMMIT=${{ github.event.client_payload.server }} \
           --push
 
           echo "version=${DOCKER_TAG}" >> "$GITHUB_OUTPUT"

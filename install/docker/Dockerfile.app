@@ -1,7 +1,7 @@
 ARG SRC_PATH="/app/onlyoffice/src"
 ARG BUILD_PATH="/var/www"
-ARG DOTNET_SDK="mcr.microsoft.com/dotnet/sdk:7.0"
-ARG DOTNET_RUN="mcr.microsoft.com/dotnet/aspnet:7.0"
+ARG DOTNET_SDK="mcr.microsoft.com/dotnet/sdk:8.0"
+ARG DOTNET_RUN="mcr.microsoft.com/dotnet/aspnet:8.0"
 
 FROM $DOTNET_SDK AS base
 ARG RELEASE_DATE="2016-06-22"
@@ -16,48 +16,66 @@ ARG DEPLOY_ARGS="deploy"
 ARG DEBUG_INFO="true"
 ARG PUBLISH_CNF="Release"
 
+ARG BUILDTOOLS_BRANCH=""
+ARG SERVER_BRANCH=""
+ARG CLIENT_BRANCH=""
+ARG CAMPAIGNS_BRANCH=""
+ARG BUILDTOOLS_COMMIT=""
+ARG SERVER_COMMIT=""
+ARG CLIENT_COMMIT=""
+ARG CAMPAIGNS_COMMIT=""
+
 LABEL onlyoffice.appserver.release-date="${RELEASE_DATE}" \
-      maintainer="Ascensio System SIA <support@onlyoffice.com>"
+    maintainer="Ascensio System SIA <support@onlyoffice.com>"
 
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+ENV BUILDTOOLS_BRANCH=${BUILDTOOLS_BRANCH:-$GIT_BRANCH}
+ENV SERVER_BRANCH=${SERVER_BRANCH:-$GIT_BRANCH}
+ENV CLIENT_BRANCH=${CLIENT_BRANCH:-$GIT_BRANCH}
+ENV CAMPAIGNS_BRANCH=${CAMPAIGNS_BRANCH:-$GIT_BRANCH}
+
 RUN apt-get -y update && \
     apt-get install -yq \
-        sudo \
-        locales \
-        git \
-        npm  && \
+    sudo \
+    locales \
+    git \
+    python3-pip \
+    npm  && \
     locale-gen en_US.UTF-8 && \
     npm install --global yarn && \
-    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/nodesource.gpg --import && \
     chmod 644 /usr/share/keyrings/nodesource.gpg && \
     apt-get -y update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-ADD https://api.github.com/repos/lemmav/DocSpace/git/refs/heads/${GIT_BRANCH} version.json
-RUN echo ${GIT_BRANCH}  && \
-    git clone --depth 1 --recurse-submodules -b ${GIT_BRANCH} https://github.com/lemmav/DocSpace.git ${SRC_PATH}
+ADD https://api.github.com/repos/ONLYOFFICE/DocSpace-buildtools/git/refs/heads/${GIT_BRANCH} version.json
+RUN git clone -b ${BUILDTOOLS_BRANCH} https://github.com/lemmav/DocSpace-buildtools.git ${SRC_PATH}/buildtools && \
+    if [ -n "${BUILDTOOLS_COMMIT}" ]; then git -C ${SRC_PATH}/buildtools checkout ${BUILDTOOLS_COMMIT}; fi && \
+    git clone --recurse-submodules -b ${SERVER_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Server.git ${SRC_PATH}/server && \
+    if [ -n "${SERVER_COMMIT}" ]; then git -C ${SRC_PATH}/server checkout ${SERVER_COMMIT}; fi && \
+    git clone -b ${CLIENT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Client.git ${SRC_PATH}/client && \
+    if [ -n "${CLIENT_COMMIT}" ]; then git -C ${SRC_PATH}/client checkout ${CLIENT_COMMIT}; fi && \
+    git clone -b master --depth 1 https://github.com/ONLYOFFICE/ASC.Web.Campaigns.git ${SRC_PATH}/campaigns && \
+    if [ -n "${CAMPAIGNS_COMMIT}" ]; then git -C ${SRC_PATH}/campaigns checkout ${CAMPAIGNS_COMMIT}; fi
 
 RUN cd ${SRC_PATH} && \
     mkdir -p /app/onlyoffice/config/ && \
     cd buildtools/config && \
     ls | grep -v test | grep -v dev | grep -v nginx | xargs cp -t /app/onlyoffice/config/ && \
     cd ${SRC_PATH} && \
-    # mkdir -p /app/onlyoffice/ && \
-    #find buildtools/config/ -maxdepth 1 -name "*.json" | grep -v test | grep -v dev | xargs tar -cvf config.tar && \
-    # tar -C "/app/onlyoffice/" -xvf config.tar && \
     cp buildtools/config/*.config /app/onlyoffice/config/ && \
     mkdir -p /etc/nginx/conf.d && cp -f buildtools/config/nginx/onlyoffice*.conf /etc/nginx/conf.d/ && \
-    mkdir -p /etc/nginx/includes/ && cp -f buildtools/config/nginx/includes/onlyoffice*.conf /etc/nginx/includes/ && \
+    mkdir -p /etc/nginx/includes/ && cp -f buildtools/config/nginx/includes/onlyoffice*.conf /etc/nginx/includes/ && cp -f buildtools/config/nginx/includes/server-*.conf /etc/nginx/includes/ && \
     sed -i "s/\"number\".*,/\"number\": \"${PRODUCT_VERSION}.${BUILD_NUMBER}\",/g" /app/onlyoffice/config/appsettings.json && \
     sed -e 's/#//' -i /etc/nginx/conf.d/onlyoffice.conf && \
     cd ${SRC_PATH}/buildtools/install/common/ && \
-    bash build-frontend.sh -sp "${SRC_PATH}/client" -ba "${BUILD_ARGS}" -da "${DEPLOY_ARGS}" -di "${DEBUG_INFO}" && \
-    bash build-backend.sh -sp "${SRC_PATH}/server"  && \
+    bash build-frontend.sh -sp "${SRC_PATH}" -ba "${BUILD_ARGS}" -da "${DEPLOY_ARGS}" -di "${DEBUG_INFO}" && \
+    bash build-backend.sh -sp "${SRC_PATH}"  && \
     bash publish-backend.sh -pc "${PUBLISH_CNF}" -sp "${SRC_PATH}/server" -bp "${BUILD_PATH}"  && \
     cp -rf ${SRC_PATH}/server/products/ASC.Files/Server/DocStore ${BUILD_PATH}/products/ASC.Files/server/ && \
     rm -rf ${SRC_PATH}/server/common/* && \
@@ -66,7 +84,7 @@ RUN cd ${SRC_PATH} && \
     rm -rf ${SRC_PATH}/server/products/ASC.Files/Server/* && \
     rm -rf ${SRC_PATH}/server/products/ASC.Files/Service/* && \
     rm -rf ${SRC_PATH}/server/products/ASC.People/Server/* 
-  
+
 COPY config/mysql/conf.d/mysql.cnf /etc/mysql/conf.d/mysql.cnf
 
 FROM $DOTNET_RUN as dotnetrun
@@ -85,21 +103,22 @@ RUN mkdir -p /var/log/onlyoffice && \
     chown onlyoffice:onlyoffice /var/www -R && \
     apt-get -y update && \
     apt-get install -yq \
-        sudo \
-        nano \
-        curl \
-        vim \
-        python3-pip \
-        libgdiplus && \
-    pip3 install --upgrade jsonpath-ng multipledispatch netaddr netifaces && \
+    sudo \
+    nano \
+    curl \
+    vim \
+    python3-pip \
+    libgdiplus && \
+    pip3 install --upgrade --break-system-packages jsonpath-ng multipledispatch netaddr netifaces && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
 
+#USER onlyoffice
 EXPOSE 5050
 ENTRYPOINT ["python3", "docker-entrypoint.py"]
 
-FROM node:18-slim as noderun
+FROM node:20-slim as noderun
 ARG BUILD_PATH
 ARG SRC_PATH 
 ENV BUILD_PATH=${BUILD_PATH}
@@ -114,12 +133,12 @@ RUN mkdir -p /var/log/onlyoffice && \
     chown onlyoffice:onlyoffice /var/www -R && \
     apt-get -y update && \
     apt-get install -yq \ 
-        sudo \
-        nano \
-        curl \
-        vim \
-        python3-pip && \
-        pip3 install --upgrade jsonpath-ng multipledispatch netaddr netifaces --break-system-packages && \
+    sudo \
+    nano \
+    curl \
+    vim \
+    python3-pip && \
+    pip3 install --upgrade --break-system-packages jsonpath-ng multipledispatch netaddr netifaces && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
@@ -148,9 +167,12 @@ COPY --from=base /etc/nginx/conf.d /etc/nginx/conf.d
 COPY --from=base /etc/nginx/includes /etc/nginx/includes
 COPY --from=base ${SRC_PATH}/publish/web/client ${BUILD_PATH}/client
 COPY --from=base ${SRC_PATH}/publish/web/public ${BUILD_PATH}/public
+COPY --from=base ${SRC_PATH}/campaigns/src/campaigns ${BUILD_PATH}/public/campaigns
+COPY --from=base ${SRC_PATH}/publish/web/management ${BUILD_PATH}/management
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/docker-entrypoint.d /docker-entrypoint.d
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/templates/upstream.conf.template /etc/nginx/templates/upstream.conf.template
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/templates/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY --from=base ${SRC_PATH}/buildtools/config/nginx/html /etc/nginx/html
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/prepare-nginx-router.sh /docker-entrypoint.d/prepare-nginx-router.sh
 COPY --from=base ${SRC_PATH}/buildtools/install/docker/config/nginx/docker-entrypoint.sh /docker-entrypoint.sh
 
@@ -166,11 +188,17 @@ RUN sed -i 's/127.0.0.1:5010/$service_api_system/' /etc/nginx/conf.d/onlyoffice.
     sed -i 's/127.0.0.1:9834/$service_sso/' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i 's/127.0.0.1:5013/$service_doceditor/' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i 's/127.0.0.1:5011/$service_login/' /etc/nginx/conf.d/onlyoffice.conf && \
+    sed -i 's/127.0.0.1:9090/$service_identity_api/' /etc/nginx/conf.d/onlyoffice.conf && \
+    sed -i 's/127.0.0.1:8080/$service_identity/' /etc/nginx/conf.d/onlyoffice.conf && \
+    if [[ -z "${SERVICE_CLIENT}" ]] ; then sed -i 's/127.0.0.1:5001/$service_client/' /etc/nginx/conf.d/onlyoffice.conf; fi && \
+    if [[ -z "${SERVICE_MANAGEMENT}" ]] ; then sed -i 's/127.0.0.1:5015/$service_management/' /etc/nginx/conf.d/onlyoffice.conf; fi && \
     sed -i 's/127.0.0.1:5033/$service_healthchecks/' /etc/nginx/conf.d/onlyoffice.conf && \
+    sed -i 's/127.0.0.1:5601/$dashboards_host:5601/' /etc/nginx/includes/server-dashboards.conf && \
     sed -i 's/$public_root/\/var\/www\/public\//' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i 's/http:\/\/172.*/$document_server;/' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i '/client_body_temp_path/ i \ \ \ \ $MAP_HASH_BUCKET_SIZE' /etc/nginx/nginx.conf.template && \
-    sed -i 's/\(worker_connections\).*;/\1 $COUNT_WORKER_CONNECTIONS;/' /etc/nginx/nginx.conf.template 
+    sed -i 's/\(worker_connections\).*;/\1 $COUNT_WORKER_CONNECTIONS;/' /etc/nginx/nginx.conf.template && \
+    sed -i -e '/^user/s/^/#/' -e 's#/tmp/nginx.pid#nginx.pid#' -e 's#/etc/nginx/mime.types#mime.types#' /etc/nginx/nginx.conf.template 
 
 ENTRYPOINT  [ "/docker-entrypoint.sh" ]
 
@@ -244,11 +272,16 @@ FROM dotnetrun AS files_services
 ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
 WORKDIR ${BUILD_PATH}/products/ASC.Files/service/
 
+RUN  echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list && \
+    apt-key adv --keyserver keys.gnupg.net --recv-keys 3B4FE6ACC0B21F32 && \
+    apt-key adv --keyserver keys.gnupg.net --recv-keys 871920D1991BC93C && \
+    apt-get -y update && \
+    apt-get install -yq libssl1.1 && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --chown=onlyoffice:onlyoffice docker-entrypoint.py ./docker-entrypoint.py
 COPY --from=base --chown=onlyoffice:onlyoffice ${BUILD_PATH}/services/ASC.Files.Service/service/ .
-# COPY --from=onlyoffice/ffvideo:6.0 --chown=onlyoffice:onlyoffice /usr/local /usr/local/
-COPY --from=mwader/static-ffmpeg:6.0-1 --chown=onlyoffice:onlyoffice /ffmpeg /usr/local/
-COPY --from=mwader/static-ffmpeg:6.0-1 --chown=onlyoffice:onlyoffice /ffprobe /usr/local/
+COPY --from=onlyoffice/ffvideo:6.0 --chown=onlyoffice:onlyoffice /usr/local /usr/local/
 
 CMD ["ASC.Files.Service.dll", "ASC.Files.Service", "core:eventBus:subscriptionClientName=asc_event_bus_files_service_queue"]
 
@@ -313,7 +346,7 @@ WORKDIR ${BUILD_PATH}/studio/ASC.Web.Studio/
 COPY --chown=onlyoffice:onlyoffice docker-entrypoint.py ./docker-entrypoint.py
 COPY --from=base --chown=onlyoffice:onlyoffice ${BUILD_PATH}/services/ASC.Web.Studio/service/ .
 
-CMD ["ASC.Web.Studio.dll", "ASC.Web.Studio"]
+CMD ["ASC.Web.Studio.dll", "ASC.Web.Studio", "core:eventBus:subscriptionClientName=asc_event_bus_webstudio_queue"]
 
 ## ASC.Web.HealthChecks.UI ##
 FROM dotnetrun AS healthchecks

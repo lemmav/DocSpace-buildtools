@@ -44,6 +44,9 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/lemmav/DocSpace-server/commits/develop | jq '.sha')
+          echo "buildtools=$curl_buildtools"
+          echo "client=$curl_client" 
+          echo "server=$curl_server" 
           echo "buildtools=$curl_buildtools" >> $GITHUB_OUTPUT 
           echo "client=$curl_client" >> $GITHUB_OUTPUT
           echo "server=$curl_server" >> $GITHUB_OUTPUT  

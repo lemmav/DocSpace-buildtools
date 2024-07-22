@@ -54,7 +54,7 @@ jobs:
         run: |
           echo "${{ steps.list-branches.outputs.json_output }}"
       
-          payload=$(env | grep '_hash=' | awk -F'=' '{print "\"" $1 "\": \"" $2 "\""}' | paste -sd, - | sed 's/^/{/;s/$/}/')
+          payload=$((env | grep '_hash=' | awk -F'=' '{print "\"" $1 "\": \"" $2 "\""}' | paste -sd, - | sed 's/^/{/;s/$/}/')| tr -d '[:space:]')
           echo "Payload JSON: $payload"
           
           curl \

@@ -63,7 +63,7 @@ jobs:
           fi
           export DOCKER_TAG
           echo "payload: ${{ toJson(github.event.client_payload) }}"
-          BUILDTOOLS_ENV="${{ github.event.client_payload }}"
+          BUILDTOOLS_ENV="${{ github.event.client_payload.hashes[ format('{0}_buildtools_hash', matrix.branch)] }}"
           echo "buildtools_env_after: $BUILDTOOLS_ENV"
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \

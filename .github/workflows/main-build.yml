@@ -62,7 +62,7 @@ jobs:
             DOCKER_TAG=${PRODUCT_VERSION}.${{github.run_number}}
           fi
           export DOCKER_TAG
-          echo "buildtools=${{ github.event.client_payload.[ matrix.branch]_buildtools_hash }}"
+
           BUILDTOOLS_ENV="${{ github.event.client_payload.[ matrix.branch] }}"
           echo "buildtools_env_before: $BUILDTOOLS_ENV"
           BUILDTOOLS_ENV="$BUILDTOOLS_ENV_buildtools_hash"

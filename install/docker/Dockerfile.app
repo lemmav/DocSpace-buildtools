@@ -53,7 +53,7 @@ RUN apt-get -y update && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
-ADD https://api.github.com/repos/ONLYOFFICE/DocSpace-buildtools/git/refs/heads/${GIT_BRANCH} version.json
+ADD https://api.github.com/repos/lemmav/DocSpace-buildtools/git/refs/heads/${GIT_BRANCH} version.json
 RUN git clone -b ${BUILDTOOLS_BRANCH} https://github.com/lemmav/DocSpace-buildtools.git ${SRC_PATH}/buildtools && \
     if [ -n "${BUILDTOOLS_COMMIT}" ]; then git -C ${SRC_PATH}/buildtools checkout ${BUILDTOOLS_COMMIT}; fi && \
     git clone --recurse-submodules -b ${SERVER_BRANCH} https://github.com/lemmav/DocSpace-Server.git ${SRC_PATH}/server && \

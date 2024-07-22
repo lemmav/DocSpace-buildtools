@@ -14,50 +14,53 @@ jobs:
       - name: Check out the code
         uses: actions/checkout@v2
 
-      - name: List Branches
+      - name: List Branches and Fetch Commits
         id: list-branches
         run: |
           all_branches=$(git ls-remote -hq | sed -n 's/^[0-9a-f]\{40\}\s\+refs\/heads\//''/p')
           matching_branches=""
-
+          hashes=""
+      
           for branch in $all_branches; do
-            if [[ $branch =~ ^release/v[0-9]+  ]]; then
+            if [[ $branch =~ ^release/v[0-9]+ ]]; then
+              # Формирование списка веток для JSON
               matching_branches="${matching_branches},\"${branch}\""
+      
+              curl_buildtools=$(curl -L \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/lemmav/DocSpace-buildtools/commits/${branch}" | jq -r '.sha')
+              
+              curl_client=$(curl -L \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/lemmav/DocSpace-client/commits/${branch}" | jq -r '.sha')
+              
+              curl_server=$(curl -L \
+                -H "Accept: application/vnd.github+json" \
+                -H "X-GitHub-Api-Version: 2022-11-28" \
+                "https://api.github.com/repos/lemmav/DocSpace-server/commits/${branch}" | jq -r '.sha')
+      
+              echo "${branch}_buildtools_hash=${curl_buildtools}" >> $GITHUB_ENV
+              echo "${branch}_client_hash=${curl_client}" >> $GITHUB_ENV
+              echo "${branch}_server_hash=${curl_server}" >> $GITHUB_ENV
             fi
           done
-        
+      
           matching_branches=${matching_branches#,}
           echo "json_output=[${matching_branches}]" >> $GITHUB_OUTPUT
-          
-      - name: Last Commit
-        id: last-commit
-        run: |
-          curl_buildtools=$(curl -L \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/repos/lemmav/DocSpace-buildtools/commits/develop | jq '.sha')
-          curl_client=$(curl -L \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/repos/lemmav/DocSpace-client/commits/develop | jq '.sha')
-          curl_server=$(curl -L \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/lemmav/DocSpace-server/commits/develop | jq '.sha')
-          echo "buildtools=$curl_buildtools"
-          echo "client=$curl_client" 
-          echo "server=$curl_server" 
-          echo "buildtools=$curl_buildtools" >> $GITHUB_OUTPUT 
-          echo "client=$curl_client" >> $GITHUB_OUTPUT
-          echo "server=$curl_server" >> $GITHUB_OUTPUT  
+
       - name: Dispatch Action
         run: |
           echo "${{ steps.list-branches.outputs.json_output }}"
-
+      
+          payload=$(env | grep '_hash=' | awk -F'=' '{print "\"" $1 "\": \"" $2 "\""}' | paste -sd, - | sed 's/^/{/;s/$/}/')
+          echo "Payload JSON: $payload"
+          
           curl \
           -X POST \
-          -u "${{ secrets.USERNAME}}:${{secrets.TOKEN}}" \
+          -u "${{ secrets.USERNAME }}:${{ secrets.TOKEN }}" \
           "https://api.github.com/repos/lemmav/DocSpace-buildtools/dispatches" \
           -H "Accept: application/vnd.github.everest-preview+json" \
-          --data '{"event_type": "cron-trigger-action", "client_payload": { "branches": ${{ steps.list-branches.outputs.json_output }},"buildtools": ${{ steps.last-commit.outputs.buildtools }}, "client": ${{ steps.last-commit.outputs.client }}, "server": ${{ steps.last-commit.outputs.server }} }}'
+          --data "{\"event_type\": \"cron-trigger-action\", \"client_payload\": { \"branches\": ${{ steps.list-branches.outputs.json_output }}, \"hashes\": $payload }}"
 

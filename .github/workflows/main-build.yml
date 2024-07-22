@@ -64,7 +64,11 @@ jobs:
           export DOCKER_TAG
           echo "payload: ${{ toJson(github.event.client_payload) }}"
           BUILDTOOLS_ENV="${{ github.event.client_payload.hashes[ format('{0}_buildtools_hash', matrix.branch)] }}"
-          echo "buildtools_env_after: $BUILDTOOLS_ENV"
+          SERVER_ENV="${{ github.event.client_payload.hashes[ format('{0}_server_hash', matrix.branch)] }}"
+          CLIENT_ENV="${{ github.event.client_payload.hashes[ format('{0}_client_hash', matrix.branch)] }}"
+          echo "buildtools_hash: $BUILDTOOLS_ENV"
+          echo "server_hash: $SERVER_ENV"
+          echo "client_hash: $CLIENT_ENV"
           docker buildx bake -f build.yml \
           --set *.args.GIT_BRANCH=${{ matrix.branch }} \
           --set *.args.PRODUCT_VERSION=${PRODUCT_VERSION} \
@@ -72,6 +76,9 @@ jobs:
           --set *.platform=linux/amd64 \
           --set *.args.PRODUCT_VERSION=${PRODUCT_VERSION} \
           --set *.args.BUILD_NUMBER=${{github.run_number}} \
+          --set *.args.BUILDTOOLS_COMMIT=$BUILDTOOLS_ENV \
+          --set *.args.SERVER_COMMIT=$SERVER_ENV \
+          --set *.args.CLIENT_COMMIT=$CLIENT_ENV \
           --push
 
           echo "version=${DOCKER_TAG}" >> "$GITHUB_OUTPUT"

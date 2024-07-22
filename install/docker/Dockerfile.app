@@ -16,20 +16,34 @@ ARG DEPLOY_ARGS="deploy"
 ARG DEBUG_INFO="true"
 ARG PUBLISH_CNF="Release"
 
+ARG BUILDTOOLS_BRANCH=""
+ARG SERVER_BRANCH=""
+ARG CLIENT_BRANCH=""
+ARG CAMPAIGNS_BRANCH=""
+ARG BUILDTOOLS_COMMIT=""
+ARG SERVER_COMMIT=""
+ARG CLIENT_COMMIT=""
+ARG CAMPAIGNS_COMMIT=""
+
 LABEL onlyoffice.appserver.release-date="${RELEASE_DATE}" \
-      maintainer="Ascensio System SIA <support@onlyoffice.com>"
+    maintainer="Ascensio System SIA <support@onlyoffice.com>"
 
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
+ENV BUILDTOOLS_BRANCH=${BUILDTOOLS_BRANCH:-$GIT_BRANCH}
+ENV SERVER_BRANCH=${SERVER_BRANCH:-$GIT_BRANCH}
+ENV CLIENT_BRANCH=${CLIENT_BRANCH:-$GIT_BRANCH}
+ENV CAMPAIGNS_BRANCH=${CAMPAIGNS_BRANCH:-$GIT_BRANCH}
+
 RUN apt-get -y update && \
     apt-get install -yq \
-        sudo \
-        locales \
-        git \
-        python3-pip \
-        npm  && \
+    sudo \
+    locales \
+    git \
+    python3-pip \
+    npm  && \
     locale-gen en_US.UTF-8 && \
     npm install --global yarn && \
     echo "deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
@@ -40,10 +54,14 @@ RUN apt-get -y update && \
     rm -rf /var/lib/apt/lists/*
 
 ADD https://api.github.com/repos/ONLYOFFICE/DocSpace-buildtools/git/refs/heads/${GIT_BRANCH} version.json
-RUN git clone -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-buildtools.git ${SRC_PATH}/buildtools && \
-    git clone --recurse-submodules -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Server.git ${SRC_PATH}/server && \
-    git clone -b ${GIT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Client.git ${SRC_PATH}/client && \
-    git clone -b "master" --depth 1 https://github.com/ONLYOFFICE/ASC.Web.Campaigns.git ${SRC_PATH}/campaigns
+RUN git clone -b ${BUILDTOOLS_BRANCH} https://github.com/lemmav/DocSpace-buildtools.git ${SRC_PATH}/buildtools && \
+    if [ -n "${BUILDTOOLS_COMMIT}" ]; then git -C ${SRC_PATH}/buildtools checkout ${BUILDTOOLS_COMMIT}; fi && \
+    git clone --recurse-submodules -b ${SERVER_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Server.git ${SRC_PATH}/server && \
+    if [ -n "${SERVER_COMMIT}" ]; then git -C ${SRC_PATH}/server checkout ${SERVER_COMMIT}; fi && \
+    git clone -b ${CLIENT_BRANCH} https://github.com/ONLYOFFICE/DocSpace-Client.git ${SRC_PATH}/client && \
+    if [ -n "${CLIENT_COMMIT}" ]; then git -C ${SRC_PATH}/client checkout ${CLIENT_COMMIT}; fi && \
+    git clone -b master --depth 1 https://github.com/ONLYOFFICE/ASC.Web.Campaigns.git ${SRC_PATH}/campaigns && \
+    if [ -n "${CAMPAIGNS_COMMIT}" ]; then git -C ${SRC_PATH}/campaigns checkout ${CAMPAIGNS_COMMIT}; fi
 
 RUN cd ${SRC_PATH} && \
     mkdir -p /app/onlyoffice/config/ && \
@@ -52,7 +70,7 @@ RUN cd ${SRC_PATH} && \
     cd ${SRC_PATH} && \
     cp buildtools/config/*.config /app/onlyoffice/config/ && \
     mkdir -p /etc/nginx/conf.d && cp -f buildtools/config/nginx/onlyoffice*.conf /etc/nginx/conf.d/ && \
-    mkdir -p /etc/nginx/includes/ && cp -f buildtools/config/nginx/includes/onlyoffice*.conf /etc/nginx/includes/ && \
+    mkdir -p /etc/nginx/includes/ && cp -f buildtools/config/nginx/includes/onlyoffice*.conf /etc/nginx/includes/ && cp -f buildtools/config/nginx/includes/server-*.conf /etc/nginx/includes/ && \
     sed -i "s/\"number\".*,/\"number\": \"${PRODUCT_VERSION}.${BUILD_NUMBER}\",/g" /app/onlyoffice/config/appsettings.json && \
     sed -e 's/#//' -i /etc/nginx/conf.d/onlyoffice.conf && \
     cd ${SRC_PATH}/buildtools/install/common/ && \
@@ -66,7 +84,7 @@ RUN cd ${SRC_PATH} && \
     rm -rf ${SRC_PATH}/server/products/ASC.Files/Server/* && \
     rm -rf ${SRC_PATH}/server/products/ASC.Files/Service/* && \
     rm -rf ${SRC_PATH}/server/products/ASC.People/Server/* 
-  
+
 COPY config/mysql/conf.d/mysql.cnf /etc/mysql/conf.d/mysql.cnf
 
 FROM $DOTNET_RUN as dotnetrun
@@ -85,17 +103,17 @@ RUN mkdir -p /var/log/onlyoffice && \
     chown onlyoffice:onlyoffice /var/www -R && \
     apt-get -y update && \
     apt-get install -yq \
-        sudo \
-        nano \
-        curl \
-        vim \
-        python3-pip \
-        libgdiplus && \
+    sudo \
+    nano \
+    curl \
+    vim \
+    python3-pip \
+    libgdiplus && \
     pip3 install --upgrade --break-system-packages jsonpath-ng multipledispatch netaddr netifaces && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
-        
+
 #USER onlyoffice
 EXPOSE 5050
 ENTRYPOINT ["python3", "docker-entrypoint.py"]
@@ -115,12 +133,12 @@ RUN mkdir -p /var/log/onlyoffice && \
     chown onlyoffice:onlyoffice /var/www -R && \
     apt-get -y update && \
     apt-get install -yq \ 
-        sudo \
-        nano \
-        curl \
-        vim \
-        python3-pip && \
-        pip3 install --upgrade --break-system-packages jsonpath-ng multipledispatch netaddr netifaces && \
+    sudo \
+    nano \
+    curl \
+    vim \
+    python3-pip && \
+    pip3 install --upgrade --break-system-packages jsonpath-ng multipledispatch netaddr netifaces && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base --chown=onlyoffice:onlyoffice /app/onlyoffice/config/* /app/onlyoffice/config/
@@ -170,10 +188,12 @@ RUN sed -i 's/127.0.0.1:5010/$service_api_system/' /etc/nginx/conf.d/onlyoffice.
     sed -i 's/127.0.0.1:9834/$service_sso/' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i 's/127.0.0.1:5013/$service_doceditor/' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i 's/127.0.0.1:5011/$service_login/' /etc/nginx/conf.d/onlyoffice.conf && \
+    sed -i 's/127.0.0.1:9090/$service_identity_api/' /etc/nginx/conf.d/onlyoffice.conf && \
+    sed -i 's/127.0.0.1:8080/$service_identity/' /etc/nginx/conf.d/onlyoffice.conf && \
     if [[ -z "${SERVICE_CLIENT}" ]] ; then sed -i 's/127.0.0.1:5001/$service_client/' /etc/nginx/conf.d/onlyoffice.conf; fi && \
     if [[ -z "${SERVICE_MANAGEMENT}" ]] ; then sed -i 's/127.0.0.1:5015/$service_management/' /etc/nginx/conf.d/onlyoffice.conf; fi && \
     sed -i 's/127.0.0.1:5033/$service_healthchecks/' /etc/nginx/conf.d/onlyoffice.conf && \
-    sed -i 's/127.0.0.1:5601/$dashboards_host:5601/' /etc/nginx/conf.d/onlyoffice.conf && \
+    sed -i 's/127.0.0.1:5601/$dashboards_host:5601/' /etc/nginx/includes/server-dashboards.conf && \
     sed -i 's/$public_root/\/var\/www\/public\//' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i 's/http:\/\/172.*/$document_server;/' /etc/nginx/conf.d/onlyoffice.conf && \
     sed -i '/client_body_temp_path/ i \ \ \ \ $MAP_HASH_BUCKET_SIZE' /etc/nginx/nginx.conf.template && \
@@ -253,11 +273,11 @@ ENV LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64
 WORKDIR ${BUILD_PATH}/products/ASC.Files/service/
 
 RUN  echo "deb http://security.ubuntu.com/ubuntu focal-security main" | tee /etc/apt/sources.list && \
-     apt-key adv --keyserver keys.gnupg.net --recv-keys 3B4FE6ACC0B21F32 && \
-     apt-key adv --keyserver keys.gnupg.net --recv-keys 871920D1991BC93C && \
-     apt-get -y update && \
-     apt-get install -yq libssl1.1 && \
-     rm -rf /var/lib/apt/lists/*
+    apt-key adv --keyserver keys.gnupg.net --recv-keys 3B4FE6ACC0B21F32 && \
+    apt-key adv --keyserver keys.gnupg.net --recv-keys 871920D1991BC93C && \
+    apt-get -y update && \
+    apt-get install -yq libssl1.1 && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --chown=onlyoffice:onlyoffice docker-entrypoint.py ./docker-entrypoint.py
 COPY --from=base --chown=onlyoffice:onlyoffice ${BUILD_PATH}/services/ASC.Files.Service/service/ .

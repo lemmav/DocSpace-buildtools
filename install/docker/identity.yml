@@ -11,6 +11,7 @@ services:
     restart: always
     ports:
       - 8080:8080
+    image: "${REPO}/${DOCKER_IMAGE_PREFIX}-identity-authorization:${DOCKER_TAG}"
     environment:
       - SPRING_PROFILES_ACTIVE=${IDENTITY_PROFILE}
       - SPRING_APPLICATION_NAME=ASC.Identity.Authorization
@@ -33,6 +34,7 @@ services:
     container_name: ${IDENTITY_API_CONTAINER_NAME}
     ports:
       - 9090:9090
+    image: "${REPO}/${DOCKER_IMAGE_PREFIX}-identity-api:${DOCKER_TAG}"
     environment:
       - SPRING_PROFILES_ACTIVE=${PROFILE}
       - SPRING_APPLICATION_NAME=ASC.Identity.Registration
@@ -56,6 +58,7 @@ services:
     restart: "no"
     ports:
       - 8081:8081
+    image: "${REPO}/${DOCKER_IMAGE_PREFIX}-identity-migration:${DOCKER_TAG}"
     environment:
       - JDBC_PASSWORD=${JDBC_PASSWORD}
       - JDBC_URL=${JDBC_URL}

@@ -22,7 +22,7 @@ jobs:
           hashes=""
       
           for branch in $all_branches; do
-            if [[ $branch =~ ^release/v[0-9]+ || $branch =~ ^hotfix/v[0-9]+ ]]; then
+            if [[ $branch =~ ^release/v[0-9]+ || $branch =~ ^hotfix/v[0-9]+ ||  $branch == "develop" ]]; then
               # Формирование списка веток для JSON
               matching_branches="${matching_branches},\"${branch}\""
       

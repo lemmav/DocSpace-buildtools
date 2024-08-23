@@ -62,6 +62,11 @@ jobs:
             DOCKER_TAG=${PRODUCT_VERSION}.${{github.run_number}}
           fi
           export DOCKER_TAG
+          
+          docker buildx bake -f identity.yml \
+          --set *.platform=linux/amd64 \
+          --push
+          
           echo "payload: ${{ toJson(github.event.client_payload) }}"
           BUILDTOOLS_ENV="${{ github.event.client_payload.hashes[ format('{0}_buildtools_hash', matrix.branch)] }}"
           SERVER_ENV="${{ github.event.client_payload.hashes[ format('{0}_server_hash', matrix.branch)] }}"

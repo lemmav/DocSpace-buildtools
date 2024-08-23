@@ -36,7 +36,7 @@ services:
       - 9090:9090
     image: "${REPO}/${DOCKER_IMAGE_PREFIX}-identity-api:${DOCKER_TAG}"
     environment:
-      - SPRING_PROFILES_ACTIVE=${PROFILE}
+      - SPRING_PROFILES_ACTIVE=${IDENTITY_PROFILE}
       - SPRING_APPLICATION_NAME=ASC.Identity.Registration
        - SERVER_PORT=${IDENTITY_API_SERVER_PORT}
       - JDBC_PASSWORD=${JDBC_PASSWORD}

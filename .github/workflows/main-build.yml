@@ -15,7 +15,7 @@ on:
       - server-trigger-action
 
 env:
-  DOCKER_PATH: "buildtools/install/docker"
+  DOCKER_PATH: "/buildtools/install/docker"
   REPO: "lemmav"
   DOCKER_IMAGE_PREFIX: "4testing-docspace"
   DOCKERFILE: "Dockerfile.app"

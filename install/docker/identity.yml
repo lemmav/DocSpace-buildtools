@@ -3,7 +3,7 @@ version: "3.8"
 services:
   onlyoffice-identity-authorization:
     build:
-      context: 'https://github.com/lemmav/DocSpace-server'
+      context: ./server/common/ASC.Identity
       dockerfile: ${IDENTITY_DOCKERFILE}
       args: 
         - MODULE=authorization/authorization-container
@@ -27,7 +27,7 @@ services:
 
   onlyoffice-identity-api:
     build:
-      context: 'https://github.com/lemmav/DocSpace-server'
+      context: ./server/common/ASC.Identity
       dockerfile: ${IDENTITY_DOCKERFILE}
       args: 
         - MODULE=registration/registration-container
@@ -50,7 +50,7 @@ services:
 
   onlyoffice-identity-migration:
     build:
-      context: 'https://github.com/lemmav/DocSpace-server'
+      context: ./server/common/ASC.Identity
       dockerfile: ${IDENTITY_DOCKERFILE}
       args: 
         - MODULE=infrastructure/infrastructure-migration-runner

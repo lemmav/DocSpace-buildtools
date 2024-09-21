@@ -94,7 +94,7 @@ jobs:
                 ($REDHAT_CHANGED == "true" and $DEBIAN_CHANGED == "true" and .execute == true) or
                 ($REDHAT_CHANGED == "true" and (.name | test("CentOS|Fedora"))) or
                 ($DEBIAN_CHANGED == "true" and (.name | test("Debian|Ubuntu"))) or
-                ($REDHAT_CHANGED == "false" and $DEBIAN_CHANGED == "false" and .execute == true))]
+                ($REDHAT_CHANGED  != "true" and $DEBIAN_CHANGED  != "true" and .execute == true))]
             }' <<< "$matrix")
 
           echo "matrix=${matrix}" >> $GITHUB_OUTPUT

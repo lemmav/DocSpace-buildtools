@@ -141,10 +141,10 @@ jobs:
             DISTR='${{ matrix.distr }}' \
             OS='${{ matrix.os }}' \
             DOWNLOAD_SCRIPT='-ds true' \
-            RAM='1024' \
-            CPU='1' \
+            RAM='6144' \
+            CPU='4' \
             ARGUMENTS="-arg '--skiphardwarecheck true'" \
-            vagrant up
+            vagrant up --debug
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant

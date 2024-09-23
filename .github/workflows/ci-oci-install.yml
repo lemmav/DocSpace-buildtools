@@ -141,8 +141,8 @@ jobs:
             DISTR='${{ matrix.distr }}' \
             OS='${{ matrix.os }}' \
             DOWNLOAD_SCRIPT='-ds true' \
-            RAM='2048' \
-            CPU='2' \
+            RAM='1024' \
+            CPU='1' \
             ARGUMENTS="-arg '--skiphardwarecheck true'" \
             vagrant up
           on_retry_command: |

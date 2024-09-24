@@ -167,19 +167,22 @@ jobs:
           timeout_minutes: 80
           retry_on: error
           command: |
-            sudo su
             set -eux
-
             cd tests/vagrant
             cat Vagrantfile
-            TEST_CASE='--production-install' \
-            DISTR='${{ matrix.distr }}' \
-            OS='${{ matrix.os }}' \
-            DOWNLOAD_SCRIPT='-ds true' \
-            RAM='1024' \
-            CPU='1' \
-            ARGUMENTS="-arg '--skiphardwarecheck true'" \
-            vagrant up --provider=virtualbox
+            
+            # Экспортируем переменные
+            export TEST_CASE='--production-install'
+            export DISTR='${{ matrix.distr }}'
+            export OS='${{ matrix.os }}'
+            export DOWNLOAD_SCRIPT='-ds true'
+            export RAM='1024'
+            export CPU='1'
+            export ARGUMENTS="-arg '--skiphardwarecheck true'"
+            
+            # Запускаем vagrant с sudo, используя -E для передачи переменных
+            sudo -E vagrant up --provider=virtualbox
+
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant

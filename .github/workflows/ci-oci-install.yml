@@ -2,16 +2,15 @@ name: Install OneClickInstall DocSpace
 
 on:
   # pull_request:
-  #   types: [opened, reopened, synchronize]
-  #   paths:
-  #     - '.github/workflows/ci-oci-install.yml'
-  #     - 'install/OneClickInstall/install-Debian/**'
-  #     - 'install/OneClickInstall/install-RedHat/**'
-  #     - 'install/OneClickInstall/install-Debian.sh'
-  #     - 'install/OneClickInstall/install-RedHat.sh'
+    # types: [opened, reopened, synchronize]
+    # paths:
+      # - '.github/workflows/ci-oci-install.yml'
+      # - 'install/OneClickInstall/**'
+      # - '!install/OneClickInstall/install-Docker.sh'
+      # - '!install/OneClickInstall/docspace-install.sh'
 
   # schedule:
-  #   - cron: '00 20 * * 6'  # At 23:00 on Saturday.
+    # - cron: '00 20 * * 6'  # At 23:00 on Saturday.
 
   workflow_dispatch:
     inputs:
@@ -58,19 +57,6 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Checkout code
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Determine affected distributions
-        id: determine-distros
-        if: github.event_name == 'pull_request'
-        run: |
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
-          echo "debian_changed=$(echo "$CHANGED_FILES" | grep -q 'install-Debian' && echo true || echo false)" >> $GITHUB_ENV
-          echo "redhat_changed=$(echo "$CHANGED_FILES" | grep -q 'install-RedHat' && echo true || echo false)" >> $GITHUB_ENV 
 
       - name: Set matrix names
         id: set-matrix
@@ -83,22 +69,12 @@ jobs:
               {"execute": '${{ github.event.inputs.debian12 || true }}', "name": "Debian12", "os": "debian12", "distr": "generic"},
               {"execute": '${{ github.event.inputs.ubuntu2004 || true }}', "name": "Ubuntu20.04", "os": "ubuntu2004", "distr": "generic"},
               {"execute": '${{ github.event.inputs.ubuntu2204 || true }}', "name": "Ubuntu22.04", "os": "ubuntu2204", "distr": "generic"},
-              {"execute": '${{ github.event.inputs.ubuntu2404 || true }}', "name": "Ubuntu24.04", "os": "ubuntu-24.04", "distr": "bento"},
+              {"execute": '${{ github.event.inputs.ubuntu2204 || true }}', "name": "Ubuntu24.04", "os": "ubuntu-24.04", "distr": "bento"},            
               {"execute": '${{ github.event.inputs.fedora39 || true }}', "name": "Fedora39", "os": "39-cloud-base", "distr": "fedora"},
               {"execute": '${{ github.event.inputs.fedora40 || true }}', "name": "Fedora40", "os": "fedora-40", "distr": "bento"}
             ]
-          }' | jq -c '.include')
-
-          matrix=$(jq -c --arg REDHAT_CHANGED "${{ env.redhat_changed }}" --arg DEBIAN_CHANGED "${{ env.debian_changed }}" '
-            { include: [.[] | select(
-                ($REDHAT_CHANGED == "true" and $DEBIAN_CHANGED == "true" and .execute == true) or
-                ($REDHAT_CHANGED == "true" and (.name | test("CentOS|Fedora"))) or
-                ($DEBIAN_CHANGED == "true" and (.name | test("Debian|Ubuntu"))) or
-                ($REDHAT_CHANGED  != "true" and $DEBIAN_CHANGED  != "true" and .execute == true))]
-            }' <<< "$matrix")
-
+          }' | jq -c '{include: [.include[] | select(.execute == true)]}')
           echo "matrix=${matrix}" >> $GITHUB_OUTPUT
-
   vagrant-up:
     name: "Test DocSpace with ${{ matrix.name}}"
     runs-on: ubuntu-22.04
@@ -118,38 +94,15 @@ jobs:
 
       - name: Get update and install vagrant
         run: |
-      - name: Get update and install vagrant
-        run: |
           set -eux
-          sudo apt-get remove --purge virtualbox virtualbox-dkms || true
-          curl https://www.virtualbox.org/download/oracle_vbox_2016.asc | gpg --dearmor > oracle_vbox_2016.gpg
-          curl https://www.virtualbox.org/download/oracle_vbox.asc | gpg --dearmor > oracle_vbox.gpg
-          sudo install -o root -g root -m 644 oracle_vbox_2016.gpg /etc/apt/trusted.gpg.d/
-          sudo install -o root -g root -m 644 oracle_vbox.gpg /etc/apt/trusted.gpg.d/
-          echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -sc) contrib" | sudo tee /etc/apt/sources.list.d/virtualbox.list
-          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
           sudo apt update -y
-          sudo apt install -y linux-headers-$(uname -r) dkms virtualbox-dkms
-          sudo apt install -y qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils vagrant virtualbox-7.0
-          
-          sudo apt install -y vagrant virtualbox-7.0
-          # Устанавливаем плагин vagrant-vbguest
-          vagrant plugin install vagrant-vbguest
-
-          # Выводим версии
-          echo "Vagrant version: $(vagrant --version)"
-          echo "VirtualBox version: $(vboxmanage --version)"
-
-          
-
+          sudo apt install vagrant virtualbox -y
       - name: Free Disk Space
         run: |
           sudo rm -rf /usr/local/lib/android /opt/ghc
           sudo docker image prune --all --force
-
       - name: "Test production scripts with ${{matrix.name}}"
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'schedule' }}
         uses: nick-fields/retry@v3
         with:
           max_attempts: 2
@@ -158,27 +111,19 @@ jobs:
           command: |
             set -eux
             cd tests/vagrant
-            cat Vagrantfile
-            
-            # Экспортируем переменные
-            export TEST_CASE='--production-install'
-            export DISTR='${{ matrix.distr }}'
-            export OS='${{ matrix.os }}'
-            export DOWNLOAD_SCRIPT='-ds true'
-            export RAM='1024'
-            export CPU='1'
-            export ARGUMENTS="-arg '--skiphardwarecheck true'"
-            
-            # Запускаем vagrant с sudo, используя -E для передачи переменных
-            sudo dpkg-reconfigure virtualbox-dkms
-            sudo -E vagrant up --provider=virtualbox
-
+            TEST_CASE='--production-install' \
+            DISTR='${{ matrix.distr }}' \
+            OS='${{ matrix.os }}' \
+            DOWNLOAD_SCRIPT='-ds true' \
+            RAM='5100' \
+            CPU='3' \
+            ARGUMENTS="-arg '--skiphardwarecheck true'" \
+            vagrant up
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant
             sleep 10
             vagrant destroy --force
-
       - name: "Test Local scripts with ${{matrix.name}}"
         if: ${{ github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' }}
         uses: nick-fields/retry@v3
@@ -189,15 +134,15 @@ jobs:
           command: |
             set -eux
             cd tests/vagrant
-            export TEST_CASE='--local-install' \
-            export DISTR='${{ matrix.distr }}' \
-            export OS='${{matrix.os}}' \
-            export RAM='5100' \
-            export CPU='3' \
-            export DOWNLOAD_SCRIPT='-ds false' \
-            export TEST_REPO='-tr true' \
-            export ARGUMENTS="-arg '--skiphardwarecheck true --localscripts true'" \
-            sudo -E vagrant up --provider=virtualbox
+            TEST_CASE='--local-install' \
+            DISTR='${{ matrix.distr }}' \
+            OS='${{matrix.os}}' \
+            RAM='5100' \
+            CPU='3' \
+            DOWNLOAD_SCRIPT='-ds false' \
+            TEST_REPO='-tr true' \
+            ARGUMENTS="-arg '--skiphardwarecheck true --localscripts true'" \
+            vagrant up
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant

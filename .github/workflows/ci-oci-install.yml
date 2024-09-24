@@ -124,6 +124,8 @@ jobs:
           sudo install -o root -g root -m 644 oracle_vbox_2016.gpg /etc/apt/trusted.gpg.d/
           sudo install -o root -g root -m 644 oracle_vbox.gpg /etc/apt/trusted.gpg.d/
           echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -sc) contrib" | sudo tee /etc/apt/sources.list.d/virtualbox.list
+          wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
           sudo apt update -y
           sudo apt install -y linux-headers-$(uname -r) dkms
           sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils vagrant virtualbox-7.0 -y

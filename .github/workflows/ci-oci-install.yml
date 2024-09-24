@@ -126,7 +126,7 @@ jobs:
           echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -sc) contrib" | sudo tee /etc/apt/sources.list.d/virtualbox.list
           sudo apt update -y
           sudo apt install -y linux-headers-$(uname -r) dkms
-          sudo apt install vagrant virtualbox-7.0 -y
+          sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils vagrant virtualbox-7.0 -y
 
       - name: Free Disk Space
         run: |

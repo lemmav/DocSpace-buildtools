@@ -8,6 +8,7 @@ Vagrant.configure("2") do |config|
              v.customize ["modifyvm", :id, "--ioapic", "on"]
     end
 
+    config.vm.provision "shell", inline: "sudo dnf install wget"
     config.vm.define 'ubuntu'
 
     config.vm.hostname = "host4test"

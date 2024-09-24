@@ -168,7 +168,7 @@ jobs:
           retry_on: error
           command: |
             set -eux
-            vagrant plugin update
+
             cd tests/vagrant
             cat Vagrantfile
             TEST_CASE='--production-install' \

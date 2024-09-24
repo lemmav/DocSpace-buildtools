@@ -129,6 +129,8 @@ jobs:
           sudo apt update -y
           sudo apt install -y linux-headers-$(uname -r) dkms
           sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils vagrant virtualbox-7.0 -y
+          echo "Vagrant version: $(vagrant --version)"
+          echo "VirtualBox version: $(vboxmanage --version)"
 
       - name: Free Disk Space
         run: |
@@ -153,7 +155,7 @@ jobs:
             RAM='1024' \
             CPU='1' \
             ARGUMENTS="-arg '--skiphardwarecheck true'" \
-            vagrant up
+            vagrant up --provider=virtualbox
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant

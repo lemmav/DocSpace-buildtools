@@ -137,7 +137,7 @@ jobs:
           sudo apt install -y linux-headers-$(uname -r) dkms
 
           # Устанавливаем VirtualBox 6
-          sudo apt install -y virtualbox-6.0
+          sudo apt install -y virtualbox-7.0
 
           # Устанавливаем Vagrant
           wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg

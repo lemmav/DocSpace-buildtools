@@ -118,21 +118,40 @@ jobs:
 
       - name: Get update and install vagrant
         run: |
+      - name: Get update and install vagrant
+        run: |
           set -eux
-          sudo apt-get remove --purge virtualbox
+          sudo apt-get remove --purge virtualbox || true  # Удаляем старую версию, если есть
+          
+          # Добавляем репозитории VirtualBox 6
           curl https://www.virtualbox.org/download/oracle_vbox_2016.asc | gpg --dearmor > oracle_vbox_2016.gpg
           curl https://www.virtualbox.org/download/oracle_vbox.asc | gpg --dearmor > oracle_vbox.gpg
           sudo install -o root -g root -m 644 oracle_vbox_2016.gpg /etc/apt/trusted.gpg.d/
           sudo install -o root -g root -m 644 oracle_vbox.gpg /etc/apt/trusted.gpg.d/
           echo "deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian $(lsb_release -sc) contrib" | sudo tee /etc/apt/sources.list.d/virtualbox.list
+
+          # Обновляем пакеты
+          sudo apt update -y
+          
+          # Устанавливаем зависимости
+          sudo apt install -y linux-headers-$(uname -r) dkms
+
+          # Устанавливаем VirtualBox 6
+          sudo apt install -y virtualbox-6.0
+
+          # Устанавливаем Vagrant
           wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
           echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
           sudo apt update -y
-          sudo apt install -y linux-headers-$(uname -r) dkms
-          sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils vagrant virtualbox-7.0 -y
+          sudo apt install -y vagrant
+
+          # Устанавливаем плагин vagrant-vbguest
+          vagrant plugin install vagrant-vbguest
+
+          # Выводим версии
           echo "Vagrant version: $(vagrant --version)"
-          env USER=$LOGNAME
           echo "VirtualBox version: $(vboxmanage --version)"
+
           
 
       - name: Free Disk Space

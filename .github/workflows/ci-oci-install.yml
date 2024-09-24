@@ -167,6 +167,7 @@ jobs:
           timeout_minutes: 80
           retry_on: error
           command: |
+            sudo su
             set -eux
 
             cd tests/vagrant

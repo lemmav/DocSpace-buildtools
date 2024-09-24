@@ -144,6 +144,7 @@ jobs:
           retry_on: error
           command: |
             set -eux
+            
             cd tests/vagrant
             TEST_CASE='--production-install' \
             DISTR='${{ matrix.distr }}' \
@@ -152,7 +153,7 @@ jobs:
             RAM='1024' \
             CPU='1' \
             ARGUMENTS="-arg '--skiphardwarecheck true'" \
-            vagrant up --provider virtualbox
+            vagrant up
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant

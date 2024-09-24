@@ -131,7 +131,9 @@ jobs:
           sudo apt install -y linux-headers-$(uname -r) dkms
           sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils vagrant virtualbox-6.1 -y
           echo "Vagrant version: $(vagrant --version)"
+          env USER=$LOGNAME
           echo "VirtualBox version: $(vboxmanage --version)"
+          
 
       - name: Free Disk Space
         run: |

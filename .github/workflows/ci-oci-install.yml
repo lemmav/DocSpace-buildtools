@@ -181,6 +181,7 @@ jobs:
             export ARGUMENTS="-arg '--skiphardwarecheck true'"
             
             # Запускаем vagrant с sudo, используя -E для передачи переменных
+            sudo dpkg-reconfigure virtualbox-dkms
             sudo -E vagrant up --provider=virtualbox
 
           on_retry_command: |

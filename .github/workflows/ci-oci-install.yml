@@ -150,7 +150,7 @@ jobs:
             RAM='1024' \
             CPU='1' \
             ARGUMENTS="-arg '--skiphardwarecheck true'" \
-            vagrant up --debug
+            vagrant up --provider virtualbox-7.0
           on_retry_command: |
             echo "RUN CLEAN UP: Destroy vagrant and one more try"
             cd tests/vagrant

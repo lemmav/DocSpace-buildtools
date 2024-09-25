@@ -57,7 +57,6 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-
       - name: Set matrix names
         id: set-matrix
         run: |
@@ -102,7 +101,7 @@ jobs:
           sudo rm -rf /usr/local/lib/android /opt/ghc
           sudo docker image prune --all --force
       - name: "Test production scripts with ${{matrix.name}}"
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'schedule' }}
         uses: nick-fields/retry@v3
         with:
           max_attempts: 2
